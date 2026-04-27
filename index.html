@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MK売上">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>MK売上管理</title>
+<style>
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+  background: #f5f5f0;
+  color: #2c2c2a;
+  font-size: 15px;
+  line-height: 1.5;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-text-size-adjust: 100%;
+}
+@media (prefers-color-scheme: dark) {
+  body { background: #1a1a1a; color: #e8e8e8; }
+  .card { background: #262626 !important; border-color: #3a3a3a !important; }
+  .surface { background: #2a2a2a !important; }
+  input, button { background: #2a2a2a !important; color: #e8e8e8 !important; border-color: #3a3a3a !important; }
+  .tab-active { color: #fff !important; border-bottom-color: #fff !important; }
+  .tab-inactive { color: #888 !important; }
+  .text-secondary { color: #aaa !important; }
+  .text-tertiary { color: #777 !important; }
+  .divider { border-color: #3a3a3a !important; }
+}
+.container { max-width: 600px; margin: 0 auto; padding: 12px; }
+.tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 0.5px solid rgba(0,0,0,0.15); }
+.tab { flex: 1; padding: 12px 8px; border: none; background: transparent; font-size: 14px; cursor: pointer; border-bottom: 2px solid transparent; color: #888; font-family: inherit; }
+.tab-active { color: #2c2c2a; border-bottom-color: #2c2c2a; font-weight: 500; }
+.card { background: #fff; border: 0.5px solid rgba(0,0,0,0.15); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+.surface { background: #ebe9e2; border-radius: 12px; padding: 16px; margin-bottom: 8px; }
+.surface-sm { background: #ebe9e2; border-radius: 8px; padding: 12px; }
+.text-secondary { color: #5f5e5a; font-size: 12px; }
+.text-tertiary { color: #888780; font-size: 11px; }
+.text-danger { color: #A32D2D; }
+.text-success { color: #0F6E56; }
+.divider { border-top: 0.5px solid rgba(0,0,0,0.15); }
+input, button {
+  font-family: inherit; font-size: 15px;
+  border: 0.5px solid rgba(0,0,0,0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  color: #2c2c2a;
+  -webkit-appearance: none;
+}
+input[type="number"] { font-size: 16px; }
+input:focus, button:focus { outline: 2px solid #534AB7; outline-offset: -2px; }
+button { cursor: pointer; -webkit-user-select: none; user-select: none; }
+button:active { transform: scale(0.98); }
+.btn-primary { background: #2c2c2a; color: #fff; border-color: #2c2c2a; font-weight: 500; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.row { display: flex; align-items: center; justify-content: space-between; }
+.label { display: block; font-size: 11px; color: #888780; margin-bottom: 4px; }
+.big-number { font-size: 22px; font-weight: 500; margin: 4px 0 0; }
+.med-number { font-size: 16px; font-weight: 500; margin: 2px 0 0; }
+.small-number { font-size: 15px; font-weight: 500; margin: 2px 0 0; }
+.hidden { display: none !important; }
+.toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #0F6E56; color: #fff; padding: 10px 20px; border-radius: 24px; font-size: 13px; z-index: 100; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.toast.show { opacity: 1; }
+.bar-container { background: rgba(0,0,0,0.08); height: 6px; border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; transition: width 0.3s; }
+.del-btn { background: transparent; border: none; color: #A32D2D; padding: 4px 8px; font-size: 12px; cursor: pointer; }
+.icon-btn { padding: 6px 10px; font-size: 13px; }
+canvas { max-width: 100%; }
+.entry-row { background: #fff; border: 0.5px solid rgba(0,0,0,0.15); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+@media (prefers-color-scheme: dark) {
+  .entry-row { background: #262626; border-color: #3a3a3a; }
+  .btn-primary { background: #fff; color: #1a1a1a; border-color: #fff; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="tabs">
+  <button id="tab-summary" class="tab tab-active">サマリー</button>
+  <button id="tab-list" class="tab">日別</button>
+  <button id="tab-settings" class="tab">設定</button>
+</div>
+
+<div id="view-summary">
+
+  <div class="card">
+    <div class="row" style="margin-bottom: 10px;">
+      <span class="text-secondary">日々の入力</span>
+      <input type="date" id="quick-date" style="font-size: 13px; padding: 6px 8px; width: auto;">
+    </div>
+    <div class="grid-2" style="margin-bottom: 8px;">
+      <div>
+        <label class="label">タブ売上</label>
+        <input type="number" id="quick-tab" placeholder="0" inputmode="numeric" pattern="[0-9]*" style="width: 100%;">
+      </div>
+      <div>
+        <label class="label">日報売上</label>
+        <input type="number" id="quick-nippo" placeholder="0" inputmode="numeric" pattern="[0-9]*" style="width: 100%;">
+      </div>
+    </div>
+    <div style="margin-bottom: 10px;">
+      <label class="label">空車高速(自腹)</label>
+      <input type="number" id="quick-jihara" placeholder="0" inputmode="numeric" pattern="[0-9]*" style="width: 100%;">
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button id="quick-save" class="btn-primary" style="flex: 1; padding: 12px;">保存</button>
+      <span id="quick-msg" class="text-secondary" style="min-width: 70px;"></span>
+    </div>
+  </div>
+
+  <div class="row" style="margin: 16px 0 12px;">
+    <div>
+      <div class="text-secondary">締め期間</div>
+      <div id="period-label" style="font-size: 15px; font-weight: 500; margin-top: 2px;">読み込み中...</div>
+    </div>
+    <div style="display: flex; gap: 4px;">
+      <button id="prev-period" class="icon-btn">←</button>
+      <button id="next-period" class="icon-btn">→</button>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="surface">
+      <div class="text-secondary">タブ売上(税込)</div>
+      <div id="total-tab" class="big-number">¥0</div>
+    </div>
+    <div class="surface">
+      <div class="text-secondary">日報売上(税抜)</div>
+      <div id="total-nippo" class="big-number">¥0</div>
+    </div>
+  </div>
+
+  <div class="surface-sm" style="margin-bottom: 8px;">
+    <div class="row" style="margin-bottom: 6px;">
+      <span class="text-secondary">差額(高速+税)</span>
+      <span id="diff-amount" class="med-number">¥0</span>
+    </div>
+    <div class="row">
+      <span class="text-secondary">空車高速(自腹)</span>
+      <span id="jihara-total" class="med-number text-danger">-¥0</span>
+    </div>
+    <div class="divider" style="margin: 8px 0;"></div>
+    <div class="row">
+      <span class="text-secondary">実質手取り(日報-自腹)</span>
+      <span id="net-amount" class="med-number">¥0</span>
+    </div>
+  </div>
+
+  <div id="goal-card" class="surface-sm hidden" style="margin-bottom: 12px;">
+    <div class="row" style="margin-bottom: 6px;">
+      <span class="text-secondary">目標達成率(日報基準)</span>
+      <span id="goal-percent" class="med-number">0%</span>
+    </div>
+    <div class="bar-container">
+      <div id="goal-bar" class="bar-fill" style="background: #1D9E75; width: 0%;"></div>
+    </div>
+    <div id="goal-detail" class="text-tertiary" style="margin-top: 6px;"></div>
+  </div>
+
+  <div class="grid-3" style="margin: 12px 0;">
+    <div class="surface-sm">
+      <div class="text-secondary">稼働日数</div>
+      <div id="work-days" class="small-number">0日</div>
+    </div>
+    <div class="surface-sm">
+      <div class="text-secondary">日平均</div>
+      <div id="avg-daily" class="small-number">¥0</div>
+    </div>
+    <div class="surface-sm">
+      <div class="text-secondary">最高日</div>
+      <div id="max-daily" class="small-number">¥0</div>
+    </div>
+  </div>
+
+  <div>
+    <div class="text-secondary" style="margin-bottom: 8px;">日別推移(日報売上)</div>
+    <div style="position: relative; height: 180px;">
+      <canvas id="trend-chart"></canvas>
+    </div>
+  </div>
+</div>
+
+<div id="view-list" class="hidden">
+  <div id="list-container"></div>
+</div>
+
+<div id="view-settings" class="hidden">
+  <div class="card">
+    <div style="font-weight: 500; margin-bottom: 8px;">月間目標(日報売上ベース)</div>
+    <input type="number" id="input-goal" placeholder="例: 1200000" style="width: 100%; margin-bottom: 8px;">
+    <button id="save-goal-btn" class="btn-primary" style="width: 100%; padding: 10px;">目標を保存</button>
+
+    <div style="font-weight: 500; margin: 16px 0 8px;">データ管理</div>
+    <button id="export-btn" style="width: 100%; padding: 10px; margin-bottom: 8px;">CSVエクスポート</button>
+    <button id="import-btn" style="width: 100%; padding: 10px; margin-bottom: 8px;">CSVインポート</button>
+    <input type="file" id="import-file" accept=".csv" style="display: none;">
+    <button id="reset-btn" style="width: 100%; padding: 10px; color: #A32D2D;">全データを削除</button>
+
+    <div class="text-tertiary" style="margin-top: 16px; line-height: 1.6;">
+      締め日: 21日〜翌20日<br>
+      データはこのiPhone内に保存されます<br>
+      v1.0
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+  const STORAGE_KEY = 'mk_sales_data';
+  const GOAL_KEY = 'mk_sales_goal';
+  let allData = {};
+  let goal = 0;
+  let viewOffset = 0;
+  let chart = null;
+
+  function loadData() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      allData = raw ? JSON.parse(raw) : {};
+    } catch (e) { allData = {}; }
+    try {
+      goal = parseInt(localStorage.getItem(GOAL_KEY)) || 0;
+    } catch (e) { goal = 0; }
+  }
+
+  function saveData() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(allData)); }
+    catch (e) { showToast('保存失敗', true); }
+  }
+
+  function showToast(msg, isError) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.background = isError ? '#A32D2D' : '#0F6E56';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  function getPeriod(offset) {
+    const today = new Date();
+    let baseY = today.getFullYear();
+    let baseM = today.getMonth();
+    if (today.getDate() <= 20) baseM -= 1;
+    baseM += offset;
+    const start = new Date(baseY, baseM, 21);
+    const end = new Date(baseY, baseM + 1, 20);
+    return { start, end };
+  }
+
+  function fmtDate(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function fmtYen(n) {
+    return '¥' + Math.round(n).toLocaleString('ja-JP');
+  }
+
+  function getEntriesInPeriod(offset) {
+    const { start, end } = getPeriod(offset);
+    const startStr = fmtDate(start);
+    const endStr = fmtDate(end);
+    const entries = [];
+    for (const [date, entry] of Object.entries(allData)) {
+      if (date >= startStr && date <= endStr) entries.push({ date, ...entry });
+    }
+    return entries.sort((a,b) => a.date.localeCompare(b.date));
+  }
+
+  function renderSummary() {
+    const { start, end } = getPeriod(viewOffset);
+    document.getElementById('period-label').textContent =
+      `${start.getMonth()+1}/${start.getDate()} - ${end.getMonth()+1}/${end.getDate()}`;
+
+    const entries = getEntriesInPeriod(viewOffset);
+    let totalTab = 0, totalNippo = 0, totalJihara = 0, maxNippo = 0;
+    entries.forEach(e => {
+      totalTab += e.tab || 0;
+      totalNippo += e.nippo || 0;
+      totalJihara += e.jihara || 0;
+      if ((e.nippo||0) > maxNippo) maxNippo = e.nippo;
+    });
+
+    document.getElementById('total-tab').textContent = fmtYen(totalTab);
+    document.getElementById('total-nippo').textContent = fmtYen(totalNippo);
+    document.getElementById('diff-amount').textContent = fmtYen(totalTab - totalNippo);
+    document.getElementById('jihara-total').textContent = '-' + fmtYen(totalJihara);
+    document.getElementById('net-amount').textContent = fmtYen(totalNippo - totalJihara);
+    document.getElementById('work-days').textContent = entries.length + '日';
+    document.getElementById('avg-daily').textContent = entries.length > 0 ? fmtYen(totalNippo / entries.length) : '¥0';
+    document.getElementById('max-daily').textContent = fmtYen(maxNippo);
+
+    if (goal > 0) {
+      document.getElementById('goal-card').classList.remove('hidden');
+      const pct = Math.round(totalNippo / goal * 100);
+      document.getElementById('goal-percent').textContent = pct + '%';
+      document.getElementById('goal-bar').style.width = Math.min(pct, 100) + '%';
+      document.getElementById('goal-bar').style.background = pct >= 100 ? '#1D9E75' : pct >= 70 ? '#7F77DD' : '#EF9F27';
+      const remaining = goal - totalNippo;
+      document.getElementById('goal-detail').textContent = remaining > 0
+        ? `あと ${fmtYen(remaining)}`
+        : `達成! 超過 ${fmtYen(-remaining)}`;
+    } else {
+      document.getElementById('goal-card').classList.add('hidden');
+    }
+
+    renderChart(entries);
+  }
+
+  function renderChart(entries) {
+    const ctx = document.getElementById('trend-chart');
+    if (!ctx) return;
+    if (chart) chart.destroy();
+
+    const labels = entries.map(e => {
+      const d = new Date(e.date);
+      return `${d.getMonth()+1}/${d.getDate()}`;
+    });
+    const data = entries.map(e => e.nippo || 0);
+
+    const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const textColor = isDark ? '#aaa' : '#5F5E5A';
+    const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+
+    chart = new Chart(ctx, {
+      type: 'bar',
+      data: { labels, datasets: [{ data, backgroundColor: '#7F77DD', borderRadius: 4 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: textColor, font: { size: 11 } }, grid: { display: false } },
+          y: { ticks: { color: textColor, font: { size: 11 }, callback: v => '¥' + (v/1000) + 'k' }, grid: { color: gridColor } }
+        }
+      }
+    });
+  }
+
+  function renderList() {
+    const container = document.getElementById('list-container');
+    const entries = getEntriesInPeriod(viewOffset);
+    if (entries.length === 0) {
+      container.innerHTML = '<p style="text-align: center; color: #888; font-size: 13px; padding: 2rem 0;">この期間のデータはまだありません</p>';
+      return;
+    }
+    container.innerHTML = entries.map(e => {
+      const d = new Date(e.date);
+      const wd = ['日','月','火','水','木','金','土'][d.getDay()];
+      const diff = (e.tab||0) - (e.nippo||0);
+      const jihara = e.jihara || 0;
+      return `<div class="entry-row">
+        <div class="row" style="margin-bottom: 6px;">
+          <span style="font-weight: 500;">${e.date.slice(5)} (${wd})</span>
+          <span style="font-size: 16px; font-weight: 500;">${fmtYen(e.nippo||0)}</span>
+        </div>
+        <div class="text-secondary" style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <span>タブ ${fmtYen(e.tab||0)}</span>
+          <span class="text-tertiary">差額 ${fmtYen(diff)}</span>
+          ${jihara > 0 ? `<span class="text-danger">自腹 -${fmtYen(jihara)}</span>` : ''}
+        </div>
+        <button class="del-btn" data-date="${e.date}" style="margin-top: 8px;">削除</button>
+      </div>`;
+    }).join('');
+    container.querySelectorAll('.del-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const date = btn.getAttribute('data-date');
+        if (confirm(`${date} のデータを削除?`)) {
+          delete allData[date];
+          saveData();
+          renderList();
+          renderSummary();
+        }
+      });
+    });
+  }
+
+  function clearInputs() {
+    document.getElementById('quick-tab').value = '';
+    document.getElementById('quick-nippo').value = '';
+    document.getElementById('quick-jihara').value = '';
+  }
+
+  function loadQuickInput() {
+    const date = document.getElementById('quick-date').value;
+    const existing = allData[date];
+    if (existing) {
+      document.getElementById('quick-tab').value = existing.tab || '';
+      document.getElementById('quick-nippo').value = existing.nippo || '';
+      document.getElementById('quick-jihara').value = existing.jihara || '';
+    } else {
+      clearInputs();
+    }
+    const msg = document.getElementById('quick-msg');
+    msg.textContent = existing ? '記録済み' : '';
+    msg.className = existing ? 'text-success' : 'text-secondary';
+  }
+
+  function switchTab(tab) {
+    ['summary','list','settings'].forEach(t => {
+      const btn = document.getElementById('tab-'+t);
+      const view = document.getElementById('view-'+t);
+      if (t === tab) {
+        btn.classList.add('tab-active');
+        view.classList.remove('hidden');
+      } else {
+        btn.classList.remove('tab-active');
+        view.classList.add('hidden');
+      }
+    });
+    if (tab === 'summary') renderSummary();
+    if (tab === 'list') renderList();
+  }
+
+  document.getElementById('tab-summary').addEventListener('click', () => switchTab('summary'));
+  document.getElementById('tab-list').addEventListener('click', () => switchTab('list'));
+  document.getElementById('tab-settings').addEventListener('click', () => switchTab('settings'));
+
+  document.getElementById('prev-period').addEventListener('click', () => { viewOffset--; renderSummary(); });
+  document.getElementById('next-period').addEventListener('click', () => { viewOffset++; renderSummary(); });
+
+  document.getElementById('quick-date').value = fmtDate(new Date());
+  document.getElementById('quick-date').addEventListener('change', loadQuickInput);
+
+  document.getElementById('quick-save').addEventListener('click', () => {
+    const date = document.getElementById('quick-date').value;
+    if (!date) { alert('日付を入れてください'); return; }
+    const tab = parseInt(document.getElementById('quick-tab').value) || 0;
+    const nippo = parseInt(document.getElementById('quick-nippo').value) || 0;
+    const jihara = parseInt(document.getElementById('quick-jihara').value) || 0;
+    if (tab === 0 && nippo === 0 && jihara === 0) { alert('金額を入れてください'); return; }
+    allData[date] = { tab, nippo, jihara };
+    saveData();
+
+    clearInputs();
+    const next = new Date(date);
+    next.setDate(next.getDate() + 1);
+    document.getElementById('quick-date').value = fmtDate(next);
+    loadQuickInput();
+
+    showToast('保存しました');
+    renderSummary();
+  });
+
+  document.getElementById('save-goal-btn').addEventListener('click', () => {
+    goal = parseInt(document.getElementById('input-goal').value) || 0;
+    localStorage.setItem(GOAL_KEY, String(goal));
+    showToast('目標を保存しました');
+  });
+
+  document.getElementById('export-btn').addEventListener('click', () => {
+    const sorted = Object.entries(allData).sort((a,b) => a[0].localeCompare(b[0]));
+    let csv = '日付,タブ売上(税込),日報売上(税抜),空車高速(自腹),差額,実質手取り\n';
+    sorted.forEach(([date, e]) => {
+      const tab = e.tab||0, nippo = e.nippo||0, jihara = e.jihara||0;
+      csv += `${date},${tab},${nippo},${jihara},${tab-nippo},${nippo-jihara}\n`;
+    });
+    const bom = '\uFEFF';
+    const blob = new Blob([bom + csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mk_sales_' + fmtDate(new Date()) + '.csv';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+
+  document.getElementById('import-btn').addEventListener('click', () => {
+    document.getElementById('import-file').click();
+  });
+
+  document.getElementById('import-file').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const text = ev.target.result.replace(/^\uFEFF/, '');
+        const lines = text.split(/\r?\n/);
+        let count = 0;
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(',');
+          if (cols.length < 4) continue;
+          const date = cols[0].trim();
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+          allData[date] = {
+            tab: parseInt(cols[1]) || 0,
+            nippo: parseInt(cols[2]) || 0,
+            jihara: parseInt(cols[3]) || 0
+          };
+          count++;
+        }
+        saveData();
+        renderSummary();
+        showToast(`${count}件インポートしました`);
+      } catch (err) {
+        showToast('インポート失敗', true);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    if (confirm('全データを削除? 元に戻せません')) {
+      allData = {};
+      localStorage.removeItem(STORAGE_KEY);
+      renderSummary();
+      showToast('削除しました');
+    }
+  });
+
+  loadData();
+  if (goal > 0) document.getElementById('input-goal').value = goal;
+  loadQuickInput();
+  renderSummary();
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>
