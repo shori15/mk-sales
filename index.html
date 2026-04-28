@@ -26,12 +26,17 @@ body {
   body { background: #1a1a1a; color: #e8e8e8; }
   .card { background: #262626 !important; border-color: #3a3a3a !important; }
   .surface { background: #2a2a2a !important; }
+  .surface-sm { background: #2a2a2a !important; }
   input, button { background: #2a2a2a !important; color: #e8e8e8 !important; border-color: #3a3a3a !important; }
+  .btn-primary { background: #fff !important; color: #1a1a1a !important; border-color: #fff !important; }
   .tab-active { color: #fff !important; border-bottom-color: #fff !important; }
   .tab-inactive { color: #888 !important; }
   .text-secondary { color: #aaa !important; }
   .text-tertiary { color: #777 !important; }
   .divider { border-color: #3a3a3a !important; }
+  .big-number, .med-number, .small-number { color: #e8e8e8; }
+  .bar-container { background: rgba(255,255,255,0.12) !important; }
+  .entry-row { background: #262626 !important; border-color: #3a3a3a !important; }
 }
 .container { max-width: 600px; margin: 0 auto; padding: 12px; }
 .tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 0.5px solid rgba(0,0,0,0.15); }
@@ -75,10 +80,6 @@ button:active { transform: scale(0.98); }
 .icon-btn { padding: 6px 10px; font-size: 13px; }
 canvas { max-width: 100%; }
 .entry-row { background: #fff; border: 0.5px solid rgba(0,0,0,0.15); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
-@media (prefers-color-scheme: dark) {
-  .entry-row { background: #262626; border-color: #3a3a3a; }
-  .btn-primary { background: #fff; color: #1a1a1a; border-color: #fff; }
-}
 </style>
 </head>
 <body>
@@ -308,7 +309,7 @@ canvas { max-width: 100%; }
       const pct = Math.round(totalNippo / goal * 100);
       document.getElementById('goal-percent').textContent = pct + '%';
       document.getElementById('goal-bar').style.width = Math.min(pct, 100) + '%';
-      document.getElementById('goal-bar').style.background = pct >= 100 ? '#1D9E75' : pct >= 70 ? '#7F77DD' : '#EF9F27';
+      document.getElementById('goal-bar').style.background = pct >= 100 ? '#1D9E75' : pct >= 70 ? '#C9A961' : '#888';
       const remaining = goal - totalNippo;
       document.getElementById('goal-detail').textContent = remaining > 0
         ? `あと ${fmtYen(remaining)}`
@@ -334,10 +335,11 @@ canvas { max-width: 100%; }
     const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     const textColor = isDark ? '#aaa' : '#5F5E5A';
     const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+    const barColor = '#C7A545';
 
     chart = new Chart(ctx, {
       type: 'bar',
-      data: { labels, datasets: [{ data, backgroundColor: '#7F77DD', borderRadius: 4 }] },
+      data: { labels, datasets: [{ data, backgroundColor: barColor, borderRadius: 4 }] },
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false } },
