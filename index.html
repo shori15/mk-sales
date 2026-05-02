@@ -246,24 +246,7 @@ canvas { max-width: 100%; }
     <button id="save-goal-btn" class="btn-primary" style="width: 100%; padding: 10px;">目標を保存</button>
 
     <div style="font-weight: 500; margin: 16px 0 8px;">洗車料金設定</div>
-    <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;">
-      <div class="row" style="gap: 8px;">
-        <label style="font-size: 13px; min-width: 60px;">タムラ</label>
-        <input type="number" id="carwash-tamura" placeholder="未設定" style="flex: 1;">
-        <span style="font-size: 12px; color: #aaa;">円</span>
-      </div>
-      <div class="row" style="gap: 8px;">
-        <label style="font-size: 13px; min-width: 60px;">PCW</label>
-        <input type="number" id="carwash-pcw" placeholder="未設定" style="flex: 1;">
-        <span style="font-size: 12px; color: #aaa;">円</span>
-      </div>
-      <div class="row" style="gap: 8px;">
-        <label style="font-size: 13px; min-width: 60px;">新橋</label>
-        <input type="number" id="carwash-shinbashi" placeholder="未設定" style="flex: 1;">
-        <span style="font-size: 12px; color: #aaa;">円</span>
-      </div>
-    </div>
-    <button id="save-carwash-btn" class="btn-primary" style="width: 100%; padding: 10px;">洗車料金を保存</button>
+    <p class="text-tertiary" style="margin-bottom: 8px; font-size: 11px;">タムラ・PCW・新橋はすべてメニュー選択式のため設定不要です</p>
 
     <div style="font-weight: 500; margin: 16px 0 8px;">データ管理</div>
     <button id="export-btn" style="width: 100%; padding: 10px; margin-bottom: 8px;">CSVエクスポート</button>
@@ -325,9 +308,301 @@ canvas { max-width: 100%; }
       <span id="carwash-arrow" style="font-size: 13px; color: #aaa;">▶</span>
     </div>
     <div id="carwash-form" style="display: none; margin-top: 12px;">
-      <p class="text-tertiary" style="margin-bottom: 10px;">どの洗車屋を利用しましたか?</p>
-      <div id="carwash-buttons" style="display: flex; flex-direction: column; gap: 8px;"></div>
-      <p id="carwash-price-note" class="text-tertiary" style="margin-top: 8px; font-size: 11px;"></p>
+
+      <!-- STEP 1: 洗車屋選択 -->
+      <div id="cw-step1">
+        <p class="text-tertiary" style="margin-bottom: 10px;">どの洗車屋を利用しましたか?</p>
+        <div id="carwash-buttons" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        <p id="carwash-price-note" class="text-tertiary" style="margin-top: 8px; font-size: 11px;"></p>
+      </div>
+
+      <!-- STEP 2: 新橋メニュー選択 -->
+      <div id="cw-step2" style="display:none;">
+        <div class="row" style="margin-bottom: 10px;">
+          <span style="font-size: 12px; color: #aaa;">新橋</span>
+          <button id="cw-back" style="font-size: 11px; padding: 4px 8px; color: #aaa; background: transparent; border: 0.5px solid #3a3a3a; border-radius: 6px;">← 戻る</button>
+        </div>
+        <p class="text-tertiary" style="margin-bottom: 8px;">車種メニューを選択</p>
+        <div style="display: flex; flex-direction: column; gap: 6px;" id="cw-menu-btns">
+          <button class="cw-menu-btn" data-menu="セダンA" data-price="1200" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>セダンA <span style="font-size:10px;color:#777;">クラウン・EQC・ミライ</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,200</span>
+          </button>
+          <button class="cw-menu-btn" data-menu="セダンB" data-price="1300" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>セダンB <span style="font-size:10px;color:#777;">LS・BMW・ベンツS・RR</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,300</span>
+          </button>
+          <button class="cw-menu-btn" data-menu="ワゴンA" data-price="1400" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>ワゴンA <span style="font-size:10px;color:#777;">アルファード・ベンツV・LM</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,400</span>
+          </button>
+          <button class="cw-menu-btn" data-menu="ワゴンB" data-price="1900" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>ワゴンB <span style="font-size:10px;color:#777;">グランエース・ハイエース</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,900</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 3: 新橋フル洗車&オプション選択 -->
+      <div id="cw-step3" style="display:none;">
+        <div class="row" style="margin-bottom: 10px;">
+          <div>
+            <span style="font-size:12px;color:#aaa;">新橋 / </span>
+            <span id="cw-selected-menu" style="font-size:12px;font-weight:500;color:#C7A545;"></span>
+          </div>
+          <button id="cw-back2" style="font-size:11px;padding:4px 8px;color:#aaa;background:transparent;border:0.5px solid #3a3a3a;border-radius:6px;">← 戻る</button>
+        </div>
+
+        <!-- フル洗車トグル -->
+        <div style="background:#2a2a2a;border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+          <div class="row">
+            <div>
+              <span style="font-size:13px;">フル洗車</span>
+              <span style="font-size:10px;color:#777;margin-left:6px;">車内全体水拭き・タイヤハウス等</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:12px;color:#C7A545;">+¥1,000</span>
+              <button id="cw-full-toggle" style="width:44px;height:26px;border-radius:13px;border:none;background:#444;cursor:pointer;position:relative;transition:background 0.2s;">
+                <span id="cw-full-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left 0.2s;"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- オプション -->
+        <p class="text-tertiary" style="margin-bottom:6px;">追加オプション(複数選択可)</p>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+          <label style="background:#2a2a2a;border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <div>
+              <span style="font-size:13px;">A・撥水</span>
+              <span style="font-size:10px;color:#777;margin-left:4px;">つや出し/ポリマー</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:12px;color:#C7A545;">+¥200</span>
+              <input type="checkbox" id="cw-opt-a" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+          <label style="background:#2a2a2a;border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <div>
+              <span style="font-size:13px;">B・タイヤ洗浄</span>
+              <span style="font-size:10px;color:#777;margin-left:4px;">洗剤+ブラシ</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:12px;color:#C7A545;">+¥400</span>
+              <input type="checkbox" id="cw-opt-b" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+          <label style="background:#2a2a2a;border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <div>
+              <span style="font-size:13px;">C・タイヤ洗浄</span>
+              <span style="font-size:10px;color:#777;margin-left:4px;">水洗い+ブラシ</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:12px;color:#C7A545;">+¥300</span>
+              <input type="checkbox" id="cw-opt-c" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+        </div>
+
+        <!-- 合計と記録ボタン -->
+        <div class="divider" style="margin: 0 0 10px;"></div>
+        <div class="row" style="margin-bottom:10px;">
+          <span style="font-size:13px;font-weight:500;">合計</span>
+          <span id="cw-total-display" style="font-size:20px;font-weight:500;color:#C7A545;">¥1,200</span>
+        </div>
+        <button id="cw-shinbashi-save" class="btn-primary" style="width:100%;padding:10px;">記録する</button>
+      </div>
+
+      <!-- STEP 4: タムラ車種選択 -->
+      <div id="cw-step4" style="display:none;">
+        <div class="row" style="margin-bottom: 10px;">
+          <span style="font-size: 12px; color: #aaa;">タムラ</span>
+          <button id="cw-back-tamura" style="font-size: 11px; padding: 4px 8px; color: #aaa; background: transparent; border: 0.5px solid #3a3a3a; border-radius: 6px;">← 戻る</button>
+        </div>
+        <p class="text-tertiary" style="margin-bottom: 8px;">車種メニューを選択(全車種¥1,500)</p>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <button class="cw-tamura-menu-btn" data-menu="セダンA" data-price="1500" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>セダンA <span style="font-size:10px;color:#777;">クラウン・EQC・MIRAI</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,500</span>
+          </button>
+          <button class="cw-tamura-menu-btn" data-menu="セダンB" data-price="1500" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>セダンB <span style="font-size:10px;color:#777;">LS・ベンツS・BMW・RR</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,500</span>
+          </button>
+          <button class="cw-tamura-menu-btn" data-menu="ワゴンA" data-price="1500" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>ワゴンA <span style="font-size:10px;color:#777;">アルファード・ベンツV・LM・マイバッハ</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,500</span>
+          </button>
+          <button class="cw-tamura-menu-btn" data-menu="ワゴンB" data-price="1500" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>ワゴンB <span style="font-size:10px;color:#777;">グランエース・ハイエース</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,500</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 5: タムラオプション選択 -->
+      <div id="cw-step5" style="display:none;">
+        <div class="row" style="margin-bottom: 10px;">
+          <div>
+            <span style="font-size:12px;color:#aaa;">タムラ / </span>
+            <span id="cw-tamura-selected-menu" style="font-size:12px;font-weight:500;color:#C7A545;"></span>
+          </div>
+          <button id="cw-back-tamura2" style="font-size:11px;padding:4px 8px;color:#aaa;background:transparent;border:0.5px solid #3a3a3a;border-radius:6px;">← 戻る</button>
+        </div>
+
+        <!-- 車内清掃(択一) -->
+        <p class="text-tertiary" style="margin-bottom:5px;">車内清掃</p>
+        <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;">
+          <label style="background:#2a2a2a;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <div>
+              <span style="font-size:12px;">なし</span>
+            </div>
+            <input type="radio" name="cw-tamura-clean" value="none" data-price="0" checked style="width:18px;height:18px;cursor:pointer;">
+          </label>
+          <label style="background:#2a2a2a;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <div>
+              <span style="font-size:12px;">A・水拭き+窓+掃除機</span>
+              <span style="font-size:10px;color:#777;margin-left:4px;">フルパック</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:#C7A545;">+¥400</span>
+              <input type="radio" name="cw-tamura-clean" value="A" data-price="400" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+          <label style="background:#2a2a2a;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <div>
+              <span style="font-size:12px;">B・掃除機のみ</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:#C7A545;">+¥200</span>
+              <input type="radio" name="cw-tamura-clean" value="B" data-price="200" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+        </div>
+
+        <!-- 追加オプション(複数選択可) -->
+        <p class="text-tertiary" style="margin-bottom:5px;">追加オプション</p>
+        <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;">
+          <label style="background:#2a2a2a;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <div>
+              <span style="font-size:12px;">タイヤハウス</span>
+              <span style="font-size:10px;color:#777;margin-left:4px;">内部清掃</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:#C7A545;">+¥500</span>
+              <input type="checkbox" id="cw-tamura-tire" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+          <label style="background:#2a2a2a;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <div>
+              <span style="font-size:12px;">ヒンジ・ピラー</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:#C7A545;">+¥400</span>
+              <input type="checkbox" id="cw-tamura-hinge" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+        </div>
+
+        <div class="divider" style="margin: 0 0 10px;"></div>
+        <div class="row" style="margin-bottom:10px;">
+          <span style="font-size:13px;font-weight:500;">合計</span>
+          <span id="cw-tamura-total-display" style="font-size:20px;font-weight:500;color:#C7A545;">¥1,500</span>
+        </div>
+        <button id="cw-tamura-save" class="btn-primary" style="width:100%;padding:10px;">記録する</button>
+      </div>
+
+      <!-- STEP 6: PCW車種選択 -->
+      <div id="cw-step6" style="display:none;">
+        <div class="row" style="margin-bottom: 10px;">
+          <span style="font-size: 12px; color: #aaa;">PCW</span>
+          <button id="cw-back-pcw" style="font-size: 11px; padding: 4px 8px; color: #aaa; background: transparent; border: 0.5px solid #3a3a3a; border-radius: 6px;">← 戻る</button>
+        </div>
+        <p class="text-tertiary" style="margin-bottom: 8px;">車種メニューを選択(全車種¥1,500)</p>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <button class="cw-pcw-menu-btn" data-menu="セダンA" data-price="1500" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>セダンA <span style="font-size:10px;color:#777;">クラウン・EQC・MIRAI</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,500</span>
+          </button>
+          <button class="cw-pcw-menu-btn" data-menu="セダンB" data-price="1500" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>セダンB <span style="font-size:10px;color:#777;">LEXUS・ベンツS・BMW・RR</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,500</span>
+          </button>
+          <button class="cw-pcw-menu-btn" data-menu="ワゴンA" data-price="1500" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>ワゴンA <span style="font-size:10px;color:#777;">アルファード・ベンツV</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,500</span>
+          </button>
+          <button class="cw-pcw-menu-btn" data-menu="ワゴンB" data-price="1500" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>ワゴンB <span style="font-size:10px;color:#777;">グランエース・ハイエース</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,500</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 7: PCWオプション選択 -->
+      <div id="cw-step7" style="display:none;">
+        <div class="row" style="margin-bottom: 10px;">
+          <div>
+            <span style="font-size:12px;color:#aaa;">PCW / </span>
+            <span id="cw-pcw-selected-menu" style="font-size:12px;font-weight:500;color:#C7A545;"></span>
+          </div>
+          <button id="cw-back-pcw2" style="font-size:11px;padding:4px 8px;color:#aaa;background:transparent;border:0.5px solid #3a3a3a;border-radius:6px;">← 戻る</button>
+        </div>
+
+        <p class="text-tertiary" style="margin-bottom:5px;">車内清掃</p>
+        <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;">
+          <label style="background:#2a2a2a;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <span style="font-size:12px;">なし</span>
+            <input type="radio" name="cw-pcw-clean" value="none" data-price="0" checked style="width:18px;height:18px;cursor:pointer;">
+          </label>
+          <label style="background:#2a2a2a;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <div>
+              <span style="font-size:12px;">A・水拭き+窓+掃除機</span>
+              <span style="font-size:10px;color:#777;margin-left:4px;">フルパック</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:#C7A545;">+¥400</span>
+              <input type="radio" name="cw-pcw-clean" value="A" data-price="400" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+          <label style="background:#2a2a2a;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <span style="font-size:12px;">B・掃除機のみ</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:#C7A545;">+¥200</span>
+              <input type="radio" name="cw-pcw-clean" value="B" data-price="200" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+        </div>
+
+        <p class="text-tertiary" style="margin-bottom:5px;">追加オプション</p>
+        <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;">
+          <label style="background:#2a2a2a;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <div>
+              <span style="font-size:12px;">タイヤハウス</span>
+              <span style="font-size:10px;color:#777;margin-left:4px;">内部清掃</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:#C7A545;">+¥500</span>
+              <input type="checkbox" id="cw-pcw-tire" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+          <label style="background:#2a2a2a;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <span style="font-size:12px;">ヒンジ・ピラー</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:#C7A545;">+¥400</span>
+              <input type="checkbox" id="cw-pcw-hinge" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+        </div>
+
+        <div class="divider" style="margin: 0 0 10px;"></div>
+        <div class="row" style="margin-bottom:10px;">
+          <span style="font-size:13px;font-weight:500;">合計</span>
+          <span id="cw-pcw-total-display" style="font-size:20px;font-weight:500;color:#C7A545;">¥1,500</span>
+        </div>
+        <button id="cw-pcw-save" class="btn-primary" style="width:100%;padding:10px;">記録する</button>
+      </div>
+
     </div>
   </div>
 
@@ -625,10 +900,7 @@ canvas { max-width: 100%; }
     if (tab === 'list') renderList();
     if (tab === 'expense') renderExpense();
     if (tab === 'settings') {
-      // 洗車価格を設定画面に反映
-      if (carwashPrices['タムラ']) document.getElementById('carwash-tamura').value = carwashPrices['タムラ'];
-      if (carwashPrices['PCW']) document.getElementById('carwash-pcw').value = carwashPrices['PCW'];
-      if (carwashPrices['新橋']) document.getElementById('carwash-shinbashi').value = carwashPrices['新橋'];
+      // 全洗車屋がメニュー式のため設定不要
     }
   }
 
@@ -814,9 +1086,10 @@ canvas { max-width: 100%; }
     const btns = document.getElementById('carwash-buttons');
     btns.innerHTML = CARWASH_SHOPS.map(shop => {
       const price = carwashPrices[shop] || 0;
-      const priceText = price > 0 ? fmtYen(price) : '未設定';
-      const disabled = price === 0 ? 'style="opacity:0.4;"' : '';
-      return `<button class="carwash-shop-btn" data-shop="${shop}" data-price="${price}" 
+      const isMenuShop = (shop === '新橋' || shop === 'タムラ');
+      const priceText = isMenuShop ? 'メニューで選択' : (price > 0 ? fmtYen(price) : '未設定');
+      const disabled = (!isMenuShop && price === 0) ? 'style="opacity:0.4;"' : '';
+      return `<button class="carwash-shop-btn" data-shop="${shop}" data-price="${price}"
         style="padding:12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:14px;display:flex;justify-content:space-between;align-items:center;" ${disabled}>
         <span>${shop}</span>
         <span style="color:#C7A545;font-weight:500;">${priceText}</span>
@@ -827,25 +1100,233 @@ canvas { max-width: 100%; }
       btn.addEventListener('click', () => {
         const shop = btn.getAttribute('data-shop');
         const price = parseInt(btn.getAttribute('data-price')) || 0;
-        if (price === 0) { showToast('設定から料金を設定してください', true); return; }
-        if (!confirm(`${shop} / ${fmtYen(price)} を記録しますか?`)) return;
-        const key = getPeriodKey(expOffset);
-        if (!carwashData[key]) carwashData[key] = [];
-        carwashData[key].push({ date: fmtDate(new Date()), shop, amount: price });
-        saveCarwashData();
-        // 閉じる
-        document.getElementById('carwash-form').style.display = 'none';
-        document.getElementById('carwash-arrow').textContent = '▶';
-        showToast(`${shop} ${fmtYen(price)} を記録しました`);
-        renderExpense();
-        renderSummary();
+        if (shop === '新橋') {
+          // 新橋はステップ2へ
+          document.getElementById('cw-step1').style.display = 'none';
+          document.getElementById('cw-step2').style.display = 'block';
+        } else if (shop === 'タムラ') {
+          // タムラはステップ4へ
+          document.getElementById('cw-step1').style.display = 'none';
+          document.getElementById('cw-step4').style.display = 'block';
+        } else if (shop === 'PCW') {
+          // PCWはステップ6へ
+          document.getElementById('cw-step1').style.display = 'none';
+          document.getElementById('cw-step6').style.display = 'block';
+        } else {
+          if (price === 0) { showToast('設定から料金を設定してください', true); return; }
+          if (!confirm(`${shop} / ${fmtYen(price)} を記録しますか?`)) return;
+          saveCwRecord(shop, price, shop);
+        }
       });
     });
 
     const note = document.getElementById('carwash-price-note');
-    const hasUnset = CARWASH_SHOPS.some(s => !carwashPrices[s]);
+    const hasUnset = CARWASH_SHOPS.filter(s => s !== '新橋' && s !== 'タムラ').some(s => !carwashPrices[s]);
     note.textContent = hasUnset ? '※ 未設定の洗車屋は設定タブから料金を登録してください' : '';
   }
+
+  // 新橋ステップ2: 車種選択
+  let cwSelectedMenu = '';
+  let cwSelectedPrice = 0;
+  let cwFullWash = false;
+
+  document.querySelectorAll('.cw-menu-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      cwSelectedMenu = btn.getAttribute('data-menu');
+      cwSelectedPrice = parseInt(btn.getAttribute('data-price')) || 0;
+      cwFullWash = false;
+      // フルトグルリセット
+      document.getElementById('cw-full-toggle').style.background = '#444';
+      document.getElementById('cw-full-knob').style.left = '3px';
+      document.getElementById('cw-opt-a').checked = false;
+      document.getElementById('cw-opt-b').checked = false;
+      document.getElementById('cw-opt-c').checked = false;
+      document.getElementById('cw-selected-menu').textContent = `${cwSelectedMenu} ¥${cwSelectedPrice.toLocaleString()}`;
+      updateCwTotal();
+      document.getElementById('cw-step2').style.display = 'none';
+      document.getElementById('cw-step3').style.display = 'block';
+    });
+  });
+
+  // フル洗車トグル
+  document.getElementById('cw-full-toggle').addEventListener('click', () => {
+    cwFullWash = !cwFullWash;
+    const btn = document.getElementById('cw-full-toggle');
+    const knob = document.getElementById('cw-full-knob');
+    btn.style.background = cwFullWash ? '#C7A545' : '#444';
+    knob.style.left = cwFullWash ? '21px' : '3px';
+    updateCwTotal();
+  });
+
+  // オプションチェック
+  ['cw-opt-a','cw-opt-b','cw-opt-c'].forEach(id => {
+    document.getElementById(id).addEventListener('change', updateCwTotal);
+  });
+
+  function updateCwTotal() {
+    let total = cwSelectedPrice;
+    if (cwFullWash) total += 1000;
+    if (document.getElementById('cw-opt-a').checked) total += 200;
+    if (document.getElementById('cw-opt-b').checked) total += 400;
+    if (document.getElementById('cw-opt-c').checked) total += 300;
+    document.getElementById('cw-total-display').textContent = fmtYen(total);
+    return total;
+  }
+
+  // 戻るボタン
+  document.getElementById('cw-back').addEventListener('click', () => {
+    document.getElementById('cw-step2').style.display = 'none';
+    document.getElementById('cw-step1').style.display = 'block';
+  });
+  document.getElementById('cw-back2').addEventListener('click', () => {
+    document.getElementById('cw-step3').style.display = 'none';
+    document.getElementById('cw-step2').style.display = 'block';
+  });
+
+  // 新橋記録ボタン
+  document.getElementById('cw-shinbashi-save').addEventListener('click', () => {
+    const total = updateCwTotal();
+    const opts = [];
+    if (cwFullWash) opts.push('フル');
+    if (document.getElementById('cw-opt-a').checked) opts.push('撥水');
+    if (document.getElementById('cw-opt-b').checked) opts.push('タイヤB');
+    if (document.getElementById('cw-opt-c').checked) opts.push('タイヤC');
+    const detail = `新橋/${cwSelectedMenu}${opts.length > 0 ? '+'+opts.join('/') : ''}`;
+    saveCwRecord('新橋', total, detail);
+  });
+
+  function saveCwRecord(shop, amount, detail) {
+    const key = getPeriodKey(expOffset);
+    if (!carwashData[key]) carwashData[key] = [];
+    carwashData[key].push({ date: fmtDate(new Date()), shop, amount, detail });
+    saveCarwashData();
+    // フォームを閉じてリセット
+    document.getElementById('carwash-form').style.display = 'none';
+    document.getElementById('carwash-arrow').textContent = '▶';
+    document.getElementById('cw-step1').style.display = 'block';
+    document.getElementById('cw-step2').style.display = 'none';
+    document.getElementById('cw-step3').style.display = 'none';
+    document.getElementById('cw-step4').style.display = 'none';
+    document.getElementById('cw-step5').style.display = 'none';
+    document.getElementById('cw-step6').style.display = 'none';
+    document.getElementById('cw-step7').style.display = 'none';
+    showToast(`${shop} ${fmtYen(amount)} を記録しました`);
+    renderExpense();
+    renderSummary();
+  }
+
+  // ---- タムラ専用 ----
+  let cwTamuraMenu = '';
+  let cwTamuraPrice = 0;
+
+  document.querySelectorAll('.cw-tamura-menu-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      cwTamuraMenu = btn.getAttribute('data-menu');
+      cwTamuraPrice = parseInt(btn.getAttribute('data-price')) || 0;
+      // リセット
+      document.querySelector('input[name="cw-tamura-clean"][value="none"]').checked = true;
+      document.getElementById('cw-tamura-tire').checked = false;
+      document.getElementById('cw-tamura-hinge').checked = false;
+      document.getElementById('cw-tamura-selected-menu').textContent = `${cwTamuraMenu} ¥${cwTamuraPrice.toLocaleString()}`;
+      updateCwTamuraTotal();
+      document.getElementById('cw-step4').style.display = 'none';
+      document.getElementById('cw-step5').style.display = 'block';
+    });
+  });
+
+  document.querySelectorAll('input[name="cw-tamura-clean"]').forEach(r => {
+    r.addEventListener('change', updateCwTamuraTotal);
+  });
+  document.getElementById('cw-tamura-tire').addEventListener('change', updateCwTamuraTotal);
+  document.getElementById('cw-tamura-hinge').addEventListener('change', updateCwTamuraTotal);
+
+  function updateCwTamuraTotal() {
+    let total = cwTamuraPrice;
+    const cleanRadio = document.querySelector('input[name="cw-tamura-clean"]:checked');
+    if (cleanRadio) total += parseInt(cleanRadio.getAttribute('data-price')) || 0;
+    if (document.getElementById('cw-tamura-tire').checked) total += 500;
+    if (document.getElementById('cw-tamura-hinge').checked) total += 400;
+    document.getElementById('cw-tamura-total-display').textContent = fmtYen(total);
+    return total;
+  }
+
+  document.getElementById('cw-back-tamura').addEventListener('click', () => {
+    document.getElementById('cw-step4').style.display = 'none';
+    document.getElementById('cw-step1').style.display = 'block';
+  });
+  document.getElementById('cw-back-tamura2').addEventListener('click', () => {
+    document.getElementById('cw-step5').style.display = 'none';
+    document.getElementById('cw-step4').style.display = 'block';
+  });
+
+  document.getElementById('cw-tamura-save').addEventListener('click', () => {
+    const total = updateCwTamuraTotal();
+    const opts = [];
+    const cleanRadio = document.querySelector('input[name="cw-tamura-clean"]:checked');
+    const cleanVal = cleanRadio ? cleanRadio.value : 'none';
+    if (cleanVal === 'A') opts.push('車内A');
+    else if (cleanVal === 'B') opts.push('車内B');
+    if (document.getElementById('cw-tamura-tire').checked) opts.push('タイヤH');
+    if (document.getElementById('cw-tamura-hinge').checked) opts.push('ヒンジ');
+    const detail = `タムラ/${cwTamuraMenu}${opts.length > 0 ? '+'+opts.join('/') : ''}`;
+    saveCwRecord('タムラ', total, detail);
+  });
+
+  // ---- PCW専用 ----
+  let cwPcwMenu = '';
+  let cwPcwPrice = 0;
+
+  document.querySelectorAll('.cw-pcw-menu-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      cwPcwMenu = btn.getAttribute('data-menu');
+      cwPcwPrice = parseInt(btn.getAttribute('data-price')) || 0;
+      document.querySelector('input[name="cw-pcw-clean"][value="none"]').checked = true;
+      document.getElementById('cw-pcw-tire').checked = false;
+      document.getElementById('cw-pcw-hinge').checked = false;
+      document.getElementById('cw-pcw-selected-menu').textContent = `${cwPcwMenu} ¥${cwPcwPrice.toLocaleString()}`;
+      updateCwPcwTotal();
+      document.getElementById('cw-step6').style.display = 'none';
+      document.getElementById('cw-step7').style.display = 'block';
+    });
+  });
+
+  document.querySelectorAll('input[name="cw-pcw-clean"]').forEach(r => {
+    r.addEventListener('change', updateCwPcwTotal);
+  });
+  document.getElementById('cw-pcw-tire').addEventListener('change', updateCwPcwTotal);
+  document.getElementById('cw-pcw-hinge').addEventListener('change', updateCwPcwTotal);
+
+  function updateCwPcwTotal() {
+    let total = cwPcwPrice;
+    const cleanRadio = document.querySelector('input[name="cw-pcw-clean"]:checked');
+    if (cleanRadio) total += parseInt(cleanRadio.getAttribute('data-price')) || 0;
+    if (document.getElementById('cw-pcw-tire').checked) total += 500;
+    if (document.getElementById('cw-pcw-hinge').checked) total += 400;
+    document.getElementById('cw-pcw-total-display').textContent = fmtYen(total);
+    return total;
+  }
+
+  document.getElementById('cw-back-pcw').addEventListener('click', () => {
+    document.getElementById('cw-step6').style.display = 'none';
+    document.getElementById('cw-step1').style.display = 'block';
+  });
+  document.getElementById('cw-back-pcw2').addEventListener('click', () => {
+    document.getElementById('cw-step7').style.display = 'none';
+    document.getElementById('cw-step6').style.display = 'block';
+  });
+
+  document.getElementById('cw-pcw-save').addEventListener('click', () => {
+    const total = updateCwPcwTotal();
+    const opts = [];
+    const cleanRadio = document.querySelector('input[name="cw-pcw-clean"]:checked');
+    const cleanVal = cleanRadio ? cleanRadio.value : 'none';
+    if (cleanVal === 'A') opts.push('車内A');
+    else if (cleanVal === 'B') opts.push('車内B');
+    if (document.getElementById('cw-pcw-tire').checked) opts.push('タイヤH');
+    if (document.getElementById('cw-pcw-hinge').checked) opts.push('ヒンジ');
+    const detail = `PCW/${cwPcwMenu}${opts.length > 0 ? '+'+opts.join('/') : ''}`;
+    saveCwRecord('PCW', total, detail);
+  });
 
   function renderCarwashHistory() {
     const key = getPeriodKey(expOffset);
@@ -895,13 +1376,7 @@ canvas { max-width: 100%; }
   });
 
   // 設定の洗車料金保存
-  document.getElementById('save-carwash-btn').addEventListener('click', () => {
-    carwashPrices['タムラ'] = parseInt(document.getElementById('carwash-tamura').value) || 0;
-    carwashPrices['PCW'] = parseInt(document.getElementById('carwash-pcw').value) || 0;
-    carwashPrices['新橋'] = parseInt(document.getElementById('carwash-shinbashi').value) || 0;
-    localStorage.setItem(CARWASH_PRICE_KEY, JSON.stringify(carwashPrices));
-    showToast('洗車料金を保存しました');
-  });
+  // 洗車料金は全店メニュー式のため設定保存不要
 
   loadCarwashData();
 
