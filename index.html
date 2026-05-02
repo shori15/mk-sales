@@ -732,20 +732,6 @@ canvas { max-width: 100%; }
     document.getElementById('avg-daily').textContent = entries.length > 0 ? fmtYen(totalPure / entries.length) : '¥0';
     document.getElementById('max-daily').textContent = fmtYen(maxPure);
 
-    // 実質時給(時間記録がある日だけで計算)
-    const hourlyEl = document.getElementById('avg-hourly');
-    if (daysWithHours > 0 && totalMinutes > 0) {
-      // 時間記録がある日の純売上のみで計算
-      let pureWithHours = 0;
-      entries.forEach(e => {
-        if (e.startTime && e.endTime) pureWithHours += (e.tab||0) - (e.jissya||0);
-      });
-      const hourlyRate = Math.round(pureWithHours / (totalMinutes / 60));
-      hourlyEl.textContent = fmtYen(hourlyRate) + '/h';
-    } else {
-      hourlyEl.textContent = '-';
-    }
-
     if (goal > 0) {
       document.getElementById('goal-card').classList.remove('hidden');
       const pct = Math.round(totalPure / goal * 100);
