@@ -166,7 +166,7 @@ canvas { max-width: 100%; }
   <div class="surface-sm" style="margin-bottom: 8px;">
     <div class="row" style="margin-bottom: 6px;">
       <span class="text-secondary">実車高速</span>
-      <span id="jissya-total" class="med-number">-¥0</span>
+      <span id="jissya-total" class="med-number text-danger">-¥0</span>
     </div>
     <div class="row" style="margin-bottom: 6px;">
       <span class="text-secondary">空車高速(自腹)</span>
@@ -918,6 +918,8 @@ canvas { max-width: 100%; }
     { name: 'ネクタイ', price: 310 },
   ];
   let cleaningData = {};
+  let carwashData = {};
+  let carwashPrices = { 'タムラ': 0, 'PCW': 0, '新橋': 0 };
   let expOffset = 0;
   let cleaningCounts = CLEANING_ITEMS.map(() => 0);
 
@@ -1063,9 +1065,7 @@ canvas { max-width: 100%; }
   const CARWASH_KEY = 'mk_carwash_data';
   const CARWASH_PRICE_KEY = 'mk_carwash_prices';
   const CARWASH_SHOPS = ['タムラ', 'PCW', '新橋'];
-  let carwashData = {};
-  let carwashPrices = { 'タムラ': 0, 'PCW': 0, '新橋': 0 };
-
+  // carwashData/carwashPricesは上部で宣言済み
   function loadCarwashData() {
     try {
       const raw = localStorage.getItem(CARWASH_KEY);
