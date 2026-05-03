@@ -725,6 +725,9 @@ canvas { max-width: 100%; }
     entries.forEach(e => {
       if (e.dayType === 'leave') { leaveCount++; return; }
       if (e.dayType === 'absence') { absenceDays++; return; }
+      // 出勤のみで退勤なしの未完了日は稼働日数にカウントしない
+      const isInProgress = e.startTime && !e.endTime && !(e.tab > 0);
+      if (isInProgress) return;
       workDays++;
       totalTab += e.tab || 0;
       totalJissya += e.jissya || 0;
