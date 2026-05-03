@@ -226,9 +226,15 @@ canvas { max-width: 100%; }
       <div id="avg-daily" class="small-number">¥0</div>
     </div>
   </div>
-  <div class="surface-sm" style="margin-bottom: 8px;">
-    <div class="text-secondary">最高日(純売上)</div>
-    <div id="max-daily" class="small-number">¥0</div>
+  <div class="grid-2" style="margin-bottom: 8px;">
+    <div class="surface-sm">
+      <div class="text-secondary">最高日(純売上)</div>
+      <div id="max-daily" class="small-number">¥0</div>
+    </div>
+    <div class="surface-sm">
+      <div class="text-secondary">残り有給</div>
+      <div id="remaining-leave" class="small-number" style="color: #C7A545;">--</div>
+    </div>
   </div>
   <div class="grid-2" style="margin-bottom: 16px;">
     <div class="surface-sm">
@@ -259,8 +265,12 @@ canvas { max-width: 100%; }
     <input type="number" id="input-goal" placeholder="例: 1200000" style="width: 100%; margin-bottom: 8px;">
     <button id="save-goal-btn" class="btn-primary" style="width: 100%; padding: 10px;">目標を保存</button>
 
-    <div style="font-weight: 500; margin: 16px 0 8px;">洗車料金設定</div>
-    <p class="text-tertiary" style="margin-bottom: 8px; font-size: 11px;">タムラ・PCW・新橋はすべてメニュー選択式のため設定不要です</p>
+    <div style="font-weight: 500; margin: 16px 0 8px;">保有有給日数</div>
+    <p class="text-tertiary" style="margin-bottom: 8px; font-size: 11px;">有給を使うと自動で-1されます</p>
+    <div style="display: flex; gap: 8px;">
+      <input type="number" id="input-leave-days" placeholder="例: 10" style="flex: 1;">
+      <button id="save-leave-days-btn" class="btn-primary" style="padding: 10px 16px;">保存</button>
+    </div>
 
     <div style="font-weight: 500; margin: 16px 0 8px;">データ管理</div>
     <button id="export-btn" style="width: 100%; padding: 10px; margin-bottom: 8px;">CSVエクスポート</button>
@@ -640,8 +650,10 @@ canvas { max-width: 100%; }
 (function() {
   const STORAGE_KEY = 'mk_sales_data';
   const GOAL_KEY = 'mk_sales_goal';
+  const LEAVE_DAYS_KEY = 'mk_leave_days';
   let allData = {};
   let goal = 0;
+  let leaveDays = null;  // null = 未設定
   let viewOffset = 0;
   let chart = null;
 
@@ -653,6 +665,10 @@ canvas { max-width: 100%; }
     try {
       goal = parseInt(localStorage.getItem(GOAL_KEY)) || 0;
     } catch (e) { goal = 0; }
+    try {
+      const raw = localStorage.getItem(LEAVE_DAYS_KEY);
+      leaveDays = raw !== null ? parseInt(raw) : null;
+    } catch (e) { leaveDays = null; }
   }
 
   function saveData() {
@@ -705,9 +721,9 @@ canvas { max-width: 100%; }
 
     const entries = getEntriesInPeriod(viewOffset);
     let totalTab = 0, totalJissya = 0, totalJihara = 0, maxPure = 0, totalMinutes = 0, daysWithHours = 0, totalOvertimeMin = 0;
-    let workDays = 0, leaveDays = 0, absenceDays = 0;
+    let workDays = 0, leaveCount = 0, absenceDays = 0;
     entries.forEach(e => {
-      if (e.dayType === 'leave') { leaveDays++; return; }
+      if (e.dayType === 'leave') { leaveCount++; return; }
       if (e.dayType === 'absence') { absenceDays++; return; }
       workDays++;
       totalTab += e.tab || 0;
@@ -748,9 +764,10 @@ canvas { max-width: 100%; }
     document.getElementById('carwash-summary').textContent = '-' + fmtYen(totalCarwash);
     document.getElementById('net-amount').textContent = fmtYen(netAmount);
     document.getElementById('work-days').textContent = workDays + '日';
-    document.getElementById('remaining-work-days').textContent = Math.max(0, 22 - workDays - leaveDays - absenceDays) + '日';
+    document.getElementById('remaining-work-days').textContent = Math.max(0, 22 - workDays - leaveCount - absenceDays) + '日';
     document.getElementById('avg-daily').textContent = workDays > 0 ? fmtYen(totalPure / workDays) : '¥0';
     document.getElementById('max-daily').textContent = fmtYen(maxPure);
+    document.getElementById('remaining-leave').textContent = leaveDays !== null ? leaveDays + '日' : '--';
 
     // 拘束時間と残業時間
     const fmtHours = (mins) => {
@@ -773,7 +790,7 @@ canvas { max-width: 100%; }
         : `達成! 超過 ${fmtYen(-remaining)}`;
 
       const MONTHLY_WORK_DAYS = 22;
-      const remainingDays = MONTHLY_WORK_DAYS - workDays - leaveDays - absenceDays;
+      const remainingDays = MONTHLY_WORK_DAYS - workDays - leaveCount - absenceDays;
       const paceEl = document.getElementById('pace-detail');
       if (remaining > 0 && remainingDays > 0) {
         paceEl.style.display = 'block';
@@ -932,7 +949,8 @@ canvas { max-width: 100%; }
     if (tab === 'list') renderList();
     if (tab === 'expense') renderExpense();
     if (tab === 'settings') {
-      // 全洗車屋がメニュー式のため設定不要
+      // 有給日数を入力欄に反映
+      document.getElementById('input-leave-days').value = leaveDays !== null ? leaveDays : '';
     }
   }
 
@@ -1469,9 +1487,16 @@ canvas { max-width: 100%; }
   function saveDayType(dayType, label) {
     const date = document.getElementById('quick-date').value;
     if (!date) { alert('日付を入れてください'); return; }
+    // 既に同じdayTypeで記録済みなら何もしない(2重デクリメント防止)
+    const wasLeave = allData[date] && allData[date].dayType === 'leave';
     if (!confirm(`${date} を「${label}」として記録しますか?`)) return;
     allData[date] = { dayType, tab: 0, jissya: 0, jihara: 0, startTime: '', endTime: '' };
     saveData();
+    // 有給ボタン押下時のみ保有日数を-1
+    if (dayType === 'leave' && !wasLeave && leaveDays !== null && leaveDays > 0) {
+      leaveDays -= 1;
+      localStorage.setItem(LEAVE_DAYS_KEY, String(leaveDays));
+    }
     clearInputs();
     const next = new Date(date);
     next.setDate(next.getDate() + 1);
@@ -1515,6 +1540,18 @@ canvas { max-width: 100%; }
     goal = parseInt(document.getElementById('input-goal').value) || 0;
     localStorage.setItem(GOAL_KEY, String(goal));
     showToast('目標を保存しました');
+  });
+
+  document.getElementById('save-leave-days-btn').addEventListener('click', () => {
+    const val = document.getElementById('input-leave-days').value;
+    leaveDays = val === '' ? null : Math.max(0, parseInt(val) || 0);
+    if (leaveDays === null) {
+      localStorage.removeItem(LEAVE_DAYS_KEY);
+    } else {
+      localStorage.setItem(LEAVE_DAYS_KEY, String(leaveDays));
+    }
+    showToast('保有有給日数を保存しました');
+    renderSummary();
   });
 
   document.getElementById('export-btn').addEventListener('click', () => {
