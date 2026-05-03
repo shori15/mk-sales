@@ -134,6 +134,10 @@ canvas { max-width: 100%; }
         </div>
       </div>
       <p id="work-hours-preview" class="text-tertiary" style="margin-bottom: 8px; font-size: 11px; min-height: 14px;"></p>
+      <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+        <button id="btn-leave" style="flex: 1; padding: 8px; font-size: 12px; background: #2a2a2a; border: 0.5px solid #3a3a3a; color: #C7A545; border-radius: 8px;">有給で記録</button>
+        <button id="btn-absence" style="flex: 1; padding: 8px; font-size: 12px; background: #2a2a2a; border: 0.5px solid #3a3a3a; color: #E05C5C; border-radius: 8px;">欠勤で記録</button>
+      </div>
       <div style="display: flex; align-items: center; gap: 8px;">
         <button id="quick-save" class="btn-primary" style="flex: 1; padding: 12px;">保存</button>
         <span id="quick-msg" class="text-secondary" style="min-width: 70px;"></span>
@@ -701,7 +705,11 @@ canvas { max-width: 100%; }
 
     const entries = getEntriesInPeriod(viewOffset);
     let totalTab = 0, totalJissya = 0, totalJihara = 0, maxPure = 0, totalMinutes = 0, daysWithHours = 0, totalOvertimeMin = 0;
+    let workDays = 0, leaveDays = 0, absenceDays = 0;
     entries.forEach(e => {
+      if (e.dayType === 'leave') { leaveDays++; return; }
+      if (e.dayType === 'absence') { absenceDays++; return; }
+      workDays++;
       totalTab += e.tab || 0;
       totalJissya += e.jissya || 0;
       totalJihara += e.jihara || 0;
@@ -739,9 +747,9 @@ canvas { max-width: 100%; }
     document.getElementById('cleaning-summary').textContent = '-' + fmtYen(totalCleaning);
     document.getElementById('carwash-summary').textContent = '-' + fmtYen(totalCarwash);
     document.getElementById('net-amount').textContent = fmtYen(netAmount);
-    document.getElementById('work-days').textContent = entries.length + '日';
-    document.getElementById('remaining-work-days').textContent = Math.max(0, 22 - entries.length) + '日';
-    document.getElementById('avg-daily').textContent = entries.length > 0 ? fmtYen(totalPure / entries.length) : '¥0';
+    document.getElementById('work-days').textContent = workDays + '日';
+    document.getElementById('remaining-work-days').textContent = Math.max(0, 22 - workDays - leaveDays - absenceDays) + '日';
+    document.getElementById('avg-daily').textContent = workDays > 0 ? fmtYen(totalPure / workDays) : '¥0';
     document.getElementById('max-daily').textContent = fmtYen(maxPure);
 
     // 拘束時間と残業時間
@@ -765,7 +773,7 @@ canvas { max-width: 100%; }
         : `達成! 超過 ${fmtYen(-remaining)}`;
 
       const MONTHLY_WORK_DAYS = 22;
-      const remainingDays = MONTHLY_WORK_DAYS - entries.length;
+      const remainingDays = MONTHLY_WORK_DAYS - workDays - leaveDays - absenceDays;
       const paceEl = document.getElementById('pace-detail');
       if (remaining > 0 && remainingDays > 0) {
         paceEl.style.display = 'block';
@@ -787,11 +795,14 @@ canvas { max-width: 100%; }
     if (!ctx) return;
     if (chart) chart.destroy();
 
-    const labels = entries.map(e => {
+    // 有給・欠勤を除外
+    const workEntries = entries.filter(e => e.dayType !== 'leave' && e.dayType !== 'absence');
+
+    const labels = workEntries.map(e => {
       const d = new Date(e.date);
       return `${d.getMonth()+1}/${d.getDate()}`;
     });
-    const data = entries.map(e => (e.tab || 0) - (e.jissya || 0));
+    const data = workEntries.map(e => (e.tab || 0) - (e.jissya || 0));
 
     const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     const textColor = isDark ? '#aaa' : '#5F5E5A';
@@ -822,6 +833,20 @@ canvas { max-width: 100%; }
     container.innerHTML = entries.map(e => {
       const d = new Date(e.date);
       const wd = ['日','月','火','水','木','金','土'][d.getDay()];
+      
+      // 有給・欠勤の場合は専用表示
+      if (e.dayType === 'leave' || e.dayType === 'absence') {
+        const label = e.dayType === 'leave' ? '有給' : '欠勤';
+        const color = e.dayType === 'leave' ? '#C7A545' : '#E05C5C';
+        return `<div class="entry-row">
+          <div class="row" style="margin-bottom: 4px;">
+            <span style="font-weight: 500;">${e.date.slice(5)} (${wd})</span>
+            <span style="font-size: 14px; font-weight: 500; color: ${color};">${label}</span>
+          </div>
+          <button class="del-btn" data-date="${e.date}" style="margin-top: 4px;">削除</button>
+        </div>`;
+      }
+      
       const pure = (e.tab||0) - (e.jissya||0);
       const jissya = e.jissya || 0;
       const jihara = e.jihara || 0;
@@ -1439,6 +1464,27 @@ canvas { max-width: 100%; }
     updateWorkHoursPreview();
     showToast('退勤時刻を記録しました');
   });
+
+  // 有給・欠勤ボタン
+  function saveDayType(dayType, label) {
+    const date = document.getElementById('quick-date').value;
+    if (!date) { alert('日付を入れてください'); return; }
+    if (!confirm(`${date} を「${label}」として記録しますか?`)) return;
+    allData[date] = { dayType, tab: 0, jissya: 0, jihara: 0, startTime: '', endTime: '' };
+    saveData();
+    clearInputs();
+    const next = new Date(date);
+    next.setDate(next.getDate() + 1);
+    document.getElementById('quick-date').value = fmtDate(next);
+    loadQuickInput();
+    // フォームを閉じる
+    document.getElementById('input-form').style.display = 'none';
+    document.getElementById('input-arrow').textContent = '▶';
+    showToast(`${label}として記録しました`);
+    renderSummary();
+  }
+  document.getElementById('btn-leave').addEventListener('click', () => saveDayType('leave', '有給'));
+  document.getElementById('btn-absence').addEventListener('click', () => saveDayType('absence', '欠勤'));
 
   document.getElementById('quick-save').addEventListener('click', () => {
     const date = document.getElementById('quick-date').value;
