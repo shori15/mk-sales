@@ -1519,7 +1519,7 @@ canvas { max-width: 100%; }
     const jihara = parseInt(document.getElementById('quick-jihara').value) || 0;
     const startTime = document.getElementById('quick-start').value;
     const endTime = document.getElementById('quick-end').value;
-    if (tab === 0 && jissya === 0 && jihara === 0) { alert('金額を入れてください'); return; }
+    if (tab === 0 && jissya === 0 && jihara === 0 && !startTime && !endTime) { alert('金額か出退勤時刻を入れてください'); return; }
     allData[date] = { tab, jissya, jihara, startTime, endTime };
     saveData();
 
