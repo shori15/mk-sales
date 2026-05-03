@@ -208,7 +208,7 @@ canvas { max-width: 100%; }
     </div>
   </div>
 
-  <div class="grid-2" style="margin: 12px 0 0;">
+  <div class="grid-2" style="margin: 16px 0 8px;">
     <div class="surface-sm">
       <div class="text-secondary">稼働日数 / 残り</div>
       <div style="display: flex; align-items: baseline; gap: 6px; margin-top: 2px;">
@@ -222,9 +222,19 @@ canvas { max-width: 100%; }
       <div id="avg-daily" class="small-number">¥0</div>
     </div>
   </div>
-  <div class="surface-sm" style="margin-bottom: 12px;">
+  <div class="surface-sm" style="margin-bottom: 8px;">
     <div class="text-secondary">最高日(純売上)</div>
     <div id="max-daily" class="small-number">¥0</div>
+  </div>
+  <div class="grid-2" style="margin-bottom: 16px;">
+    <div class="surface-sm">
+      <div class="text-secondary">累計拘束時間</div>
+      <div id="total-work-time" class="small-number">0時間</div>
+    </div>
+    <div class="surface-sm">
+      <div class="text-secondary">残業(8h超)</div>
+      <div id="total-overtime" class="small-number" style="color: #C7A545;">0時間</div>
+    </div>
   </div>
 
   <div>
@@ -690,7 +700,7 @@ canvas { max-width: 100%; }
       `${start.getMonth()+1}/${start.getDate()} - ${end.getMonth()+1}/${end.getDate()}`;
 
     const entries = getEntriesInPeriod(viewOffset);
-    let totalTab = 0, totalJissya = 0, totalJihara = 0, maxPure = 0, totalMinutes = 0, daysWithHours = 0;
+    let totalTab = 0, totalJissya = 0, totalJihara = 0, maxPure = 0, totalMinutes = 0, daysWithHours = 0, totalOvertimeMin = 0;
     entries.forEach(e => {
       totalTab += e.tab || 0;
       totalJissya += e.jissya || 0;
@@ -705,6 +715,8 @@ canvas { max-width: 100%; }
         mins += 60; // みなし1時間
         totalMinutes += mins;
         daysWithHours++;
+        // 残業: 8時間(480分)を超えた分
+        if (mins > 480) totalOvertimeMin += (mins - 480);
       }
     });
     const totalPure = totalTab - totalJissya;
@@ -731,6 +743,15 @@ canvas { max-width: 100%; }
     document.getElementById('remaining-work-days').textContent = Math.max(0, 22 - entries.length) + '日';
     document.getElementById('avg-daily').textContent = entries.length > 0 ? fmtYen(totalPure / entries.length) : '¥0';
     document.getElementById('max-daily').textContent = fmtYen(maxPure);
+
+    // 拘束時間と残業時間
+    const fmtHours = (mins) => {
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      return m > 0 ? `${h}時間${m}分` : `${h}時間`;
+    };
+    document.getElementById('total-work-time').textContent = fmtHours(totalMinutes);
+    document.getElementById('total-overtime').textContent = fmtHours(totalOvertimeMin);
 
     if (goal > 0) {
       document.getElementById('goal-card').classList.remove('hidden');
