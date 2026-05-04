@@ -107,15 +107,43 @@ canvas { max-width: 100%; }
         <label class="label">売上</label>
         <input type="number" id="quick-tab" placeholder="0" inputmode="numeric" pattern="[0-9]*" style="width: 100%;">
       </div>
-      <div class="grid-2" style="margin-bottom: 8px;">
-        <div>
-          <label class="label">実車高速</label>
-          <input type="number" id="quick-jissya" placeholder="0" inputmode="numeric" pattern="[0-9]*" style="width: 100%;">
+
+      <!-- 実車高速 アコーディオン -->
+      <div style="margin-bottom: 8px;">
+        <div id="jissya-toggle" class="row" style="cursor:pointer; padding: 6px 0;">
+          <span class="label" style="margin:0;">実車高速</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span id="jissya-total-preview" style="font-size:12px;font-weight:500;color:#e8e8e8;">¥0</span>
+            <span id="jissya-arrow" style="font-size:11px;color:#aaa;">▶</span>
+          </div>
         </div>
-        <div>
-          <label class="label">空車高速(自腹)</label>
-          <input type="number" id="quick-jihara" placeholder="0" inputmode="numeric" pattern="[0-9]*" style="width: 100%;">
+        <div id="jissya-form" style="display:none;">
+          <div style="display:flex;gap:6px;margin-bottom:4px;">
+            <input type="number" id="jissya-input" placeholder="金額を入力" inputmode="numeric" pattern="[0-9]*" style="flex:1;min-width:0;">
+            <button id="jissya-add-btn" style="padding:0 10px;font-size:12px;white-space:nowrap;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;">追加</button>
+          </div>
+          <div id="jissya-list" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
         </div>
+        <input type="hidden" id="quick-jissya" value="0">
+      </div>
+
+      <!-- 空車高速 アコーディオン -->
+      <div style="margin-bottom: 8px;">
+        <div id="jihara-toggle" class="row" style="cursor:pointer; padding: 6px 0;">
+          <span class="label" style="margin:0;">空車高速(自腹)</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span id="jihara-total-preview" style="font-size:12px;font-weight:500;color:#e8e8e8;">¥0</span>
+            <span id="jihara-arrow" style="font-size:11px;color:#aaa;">▶</span>
+          </div>
+        </div>
+        <div id="jihara-form" style="display:none;">
+          <div style="display:flex;gap:6px;margin-bottom:4px;">
+            <input type="number" id="jihara-input" placeholder="金額を入力" inputmode="numeric" pattern="[0-9]*" style="flex:1;min-width:0;">
+            <button id="jihara-add-btn" style="padding:0 10px;font-size:12px;white-space:nowrap;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;">追加</button>
+          </div>
+          <div id="jihara-list" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+        </div>
+        <input type="hidden" id="quick-jihara" value="0">
       </div>
       <div class="grid-2" style="margin-bottom: 6px;">
         <div>
@@ -911,8 +939,17 @@ canvas { max-width: 100%; }
 
   function clearInputs() {
     document.getElementById('quick-tab').value = '';
-    document.getElementById('quick-jissya').value = '';
-    document.getElementById('quick-jihara').value = '';
+    jissyaItems = [];
+    jiharaItems = [];
+    renderHighwayList(jissyaItems, 'jissya-list', 'jissya-total-preview', 'quick-jissya');
+    renderHighwayList(jiharaItems, 'jihara-list', 'jihara-total-preview', 'quick-jihara');
+    document.getElementById('jissya-input').value = '';
+    document.getElementById('jihara-input').value = '';
+    // アコーディオンを閉じる
+    document.getElementById('jissya-form').style.display = 'none';
+    document.getElementById('jissya-arrow').textContent = '▶';
+    document.getElementById('jihara-form').style.display = 'none';
+    document.getElementById('jihara-arrow').textContent = '▶';
     document.getElementById('quick-start').value = '';
     document.getElementById('quick-end').value = '';
     document.getElementById('work-hours-preview').textContent = '';
@@ -923,10 +960,15 @@ canvas { max-width: 100%; }
     const existing = allData[date];
     if (existing) {
       document.getElementById('quick-tab').value = existing.tab || '';
-      document.getElementById('quick-jissya').value = existing.jissya || '';
-      document.getElementById('quick-jihara').value = existing.jihara || '';
       document.getElementById('quick-start').value = existing.startTime || '';
       document.getElementById('quick-end').value = existing.endTime || '';
+      // 高速料金リストを展開(配列で保存されていれば展開、数値なら単一要素に)
+      jissyaItems = Array.isArray(existing.jissyaItems) ? [...existing.jissyaItems]
+        : (existing.jissya > 0 ? [existing.jissya] : []);
+      jiharaItems = Array.isArray(existing.jiharaItems) ? [...existing.jiharaItems]
+        : (existing.jihara > 0 ? [existing.jihara] : []);
+      renderHighwayList(jissyaItems, 'jissya-list', 'jissya-total-preview', 'quick-jissya');
+      renderHighwayList(jiharaItems, 'jihara-list', 'jihara-total-preview', 'quick-jihara');
       updateWorkHoursPreview();
     } else {
       clearInputs();
@@ -1471,6 +1513,73 @@ canvas { max-width: 100%; }
   document.getElementById('quick-end').addEventListener('change', updateWorkHoursPreview);
 
   // 出勤・退勤ボタン(現在時刻を自動入力)
+  // 実車高速・空車高速 アコーディオントグル
+  document.getElementById('jissya-toggle').addEventListener('click', () => {
+    const form = document.getElementById('jissya-form');
+    const arrow = document.getElementById('jissya-arrow');
+    const isOpen = form.style.display !== 'none';
+    form.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent = isOpen ? '▶' : '▼';
+  });
+  document.getElementById('jihara-toggle').addEventListener('click', () => {
+    const form = document.getElementById('jihara-form');
+    const arrow = document.getElementById('jihara-arrow');
+    const isOpen = form.style.display !== 'none';
+    form.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent = isOpen ? '▶' : '▼';
+  });
+
+  // ---- 高速料金の都度入力 ----
+  let jissyaItems = [];
+  let jiharaItems = [];
+
+  function renderHighwayList(items, listId, totalId, hiddenId) {
+    const list = document.getElementById(listId);
+    list.innerHTML = items.map((amt, i) => `
+      <span style="display:inline-flex;align-items:center;gap:4px;background:#2a2a2a;border:0.5px solid #3a3a3a;border-radius:6px;padding:3px 8px;font-size:12px;">
+        ¥${amt.toLocaleString()}
+        <button data-idx="${i}" style="background:transparent;border:none;color:#A32D2D;font-size:12px;padding:0;cursor:pointer;line-height:1;">×</button>
+      </span>
+    `).join('');
+    list.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        items.splice(parseInt(btn.getAttribute('data-idx')), 1);
+        updateHighwayTotal(items, listId, totalId, hiddenId);
+      });
+    });
+    const total = items.reduce((s, v) => s + v, 0);
+    document.getElementById(totalId).textContent = '¥' + total.toLocaleString();
+    document.getElementById(hiddenId).value = total;
+  }
+
+  function updateHighwayTotal(items, listId, totalId, hiddenId) {
+    renderHighwayList(items, listId, totalId, hiddenId);
+  }
+
+  document.getElementById('jissya-add-btn').addEventListener('click', () => {
+    const val = parseInt(document.getElementById('jissya-input').value) || 0;
+    if (val <= 0) return;
+    jissyaItems.push(val);
+    document.getElementById('jissya-input').value = '';
+    renderHighwayList(jissyaItems, 'jissya-list', 'jissya-total-preview', 'quick-jissya');
+  });
+
+  document.getElementById('jihara-add-btn').addEventListener('click', () => {
+    const val = parseInt(document.getElementById('jihara-input').value) || 0;
+    if (val <= 0) return;
+    jiharaItems.push(val);
+    document.getElementById('jihara-input').value = '';
+    renderHighwayList(jiharaItems, 'jihara-list', 'jihara-total-preview', 'quick-jihara');
+  });
+
+  // Enterキーでも追加できるように
+  document.getElementById('jissya-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('jissya-add-btn').click();
+  });
+  document.getElementById('jihara-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('jihara-add-btn').click();
+  });
+
   function nowTime() {
     const now = new Date();
     return String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
@@ -1523,7 +1632,7 @@ canvas { max-width: 100%; }
     const startTime = document.getElementById('quick-start').value;
     const endTime = document.getElementById('quick-end').value;
     if (tab === 0 && jissya === 0 && jihara === 0 && !startTime && !endTime) { alert('金額か出退勤時刻を入れてください'); return; }
-    allData[date] = { tab, jissya, jihara, startTime, endTime };
+    allData[date] = { tab, jissya, jihara, jissyaItems: [...jissyaItems], jiharaItems: [...jiharaItems], startTime, endTime };
     saveData();
 
     clearInputs();
