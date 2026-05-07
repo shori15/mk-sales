@@ -1806,7 +1806,17 @@ canvas { max-width: 100%; }
           const cols = lines[i].split(',');
           if (cols.length < 4) continue;
           const date = cols[0].trim();
-          if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            // 日付形式でない行は設定値として処理
+            if (cols[0].trim() === '#保有有給日数' && cols[1]) {
+              leaveDays = parseInt(cols[1]) || 0;
+              localStorage.setItem(LEAVE_DAYS_KEY, String(leaveDays));
+            } else if (cols[0].trim() === '#月間目標' && cols[1]) {
+              goal = parseInt(cols[1]) || 0;
+              localStorage.setItem(GOAL_KEY, String(goal));
+            }
+            continue;
+          }
           const entry = { tab: parseInt(cols[1])||0, jissya: parseInt(cols[2])||0, jihara: parseInt(cols[3])||0 };
           if (cols.length >= 9) {
             if (cols[6]) entry.startTime = cols[6].trim();
@@ -1815,13 +1825,6 @@ canvas { max-width: 100%; }
           }
           allData[date] = entry;
           count++;
-        } else if (cols[0].trim() === '#保有有給日数' && cols[1]) {
-          leaveDays = parseInt(cols[1]) || 0;
-          localStorage.setItem(LEAVE_DAYS_KEY, String(leaveDays));
-        } else if (cols[0].trim() === '#月間目標' && cols[1]) {
-          goal = parseInt(cols[1]) || 0;
-          localStorage.setItem(GOAL_KEY, String(goal));
-        }
         }
         saveData(); renderSummary();
         showToast(`売上${count}件インポートしました`);
