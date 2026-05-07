@@ -1736,7 +1736,7 @@ canvas { max-width: 100%; }
   document.getElementById('export-btn').addEventListener('click', () => {
     const today = fmtDate(new Date());
 
-    // 1. 売上データ
+    // 1. 売上データ(有給日数も末尾に記載)
     const sorted = Object.entries(allData).sort((a,b) => a[0].localeCompare(b[0]));
     let csv1 = '日付,売上,実車高速,空車高速(自腹),純売上,実質手取り,出勤時刻,退勤時刻,区分\n';
     sorted.forEach(([date, e]) => {
@@ -1744,6 +1744,14 @@ canvas { max-width: 100%; }
       const pure = tab - jissya;
       csv1 += `${date},${tab},${jissya},${jihara},${pure},${pure-jihara},${e.startTime||''},${e.endTime||''},${e.dayType||''}\n`;
     });
+    // 有給日数を末尾に追記
+    if (leaveDays !== null) {
+      csv1 += `#保有有給日数,${leaveDays}\n`;
+    }
+    // 月間目標を末尾に追記
+    if (goal > 0) {
+      csv1 += `#月間目標,${goal}\n`;
+    }
 
     // 2. クリーニングデータ
     let csv2 = '期間キー,日付,金額,内訳\n';
@@ -1807,6 +1815,13 @@ canvas { max-width: 100%; }
           }
           allData[date] = entry;
           count++;
+        } else if (cols[0].trim() === '#保有有給日数' && cols[1]) {
+          leaveDays = parseInt(cols[1]) || 0;
+          localStorage.setItem(LEAVE_DAYS_KEY, String(leaveDays));
+        } else if (cols[0].trim() === '#月間目標' && cols[1]) {
+          goal = parseInt(cols[1]) || 0;
+          localStorage.setItem(GOAL_KEY, String(goal));
+        }
         }
         saveData(); renderSummary();
         showToast(`売上${count}件インポートしました`);
