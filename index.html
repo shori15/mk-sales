@@ -773,6 +773,7 @@ canvas { max-width: 100%; }
   }
 
   function renderSummary() {
+    try {
     const { start, end } = getPeriod(viewOffset);
     document.getElementById('period-label').textContent =
       `${start.getMonth()+1}/${start.getDate()} - ${end.getMonth()+1}/${end.getDate()}`;
@@ -875,6 +876,10 @@ canvas { max-width: 100%; }
     }
 
     renderChart(entries);
+    } catch(err) {
+      document.getElementById('period-label').textContent = 'エラー: ' + err.message;
+      console.error('renderSummary error:', err);
+    }
   }
 
   function renderChart(entries) {
