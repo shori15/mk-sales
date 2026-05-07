@@ -237,6 +237,10 @@ canvas { max-width: 100%; }
         <span class="text-secondary">1日あたり必要額(純売上)</span>
         <span id="daily-required" class="med-number">¥0</span>
       </div>
+      <div class="row" style="margin-top: 4px;">
+        <span class="text-secondary">予想着地(現ペース×22日)</span>
+        <span id="projected-total" class="med-number" style="color: #C7A545;">¥0</span>
+      </div>
     </div>
   </div>
 
@@ -333,6 +337,10 @@ canvas { max-width: 100%; }
       <span id="cleaning-arrow" style="font-size: 13px; color: #aaa;">▶</span>
     </div>
     <div id="cleaning-form" style="display: none; margin-top: 12px;">
+      <div class="row" style="margin-bottom: 10px;">
+        <span style="font-size: 12px; color: #aaa;">日付</span>
+        <input type="date" id="cleaning-date" style="font-size: 12px; padding: 4px 8px; background: #2a2a2a; border: 0.5px solid #3a3a3a; border-radius: 6px; color: #e8e8e8;">
+      </div>
       <div id="cleaning-items"></div>
       <div class="divider" style="margin: 10px 0;"></div>
       <div class="row" style="margin-bottom: 10px;">
@@ -340,7 +348,6 @@ canvas { max-width: 100%; }
         <span id="cleaning-subtotal" style="font-size: 20px; font-weight: 500; color: #C7A545;">¥0</span>
       </div>
       <button id="cleaning-add-btn" class="btn-primary" style="width: 100%; padding: 10px;">この金額を追加</button>
-      <p id="cleaning-add-msg" style="margin: 6px 0 0; font-size: 11px; color: #0F6E56; display: none;"></p>
     </div>
   </div>
 
@@ -351,7 +358,14 @@ canvas { max-width: 100%; }
     </div>
   </div>
 
-  <div id="cleaning-history-container"></div>
+  <!-- クリーニング履歴アコーディオン -->
+  <div id="cleaning-history-accordion" style="margin-bottom: 4px;">
+    <div id="cleaning-hist-toggle" class="row" style="cursor:pointer; padding: 8px 0;">
+      <span style="font-size: 12px; color: #aaa;">履歴を見る</span>
+      <span id="cleaning-hist-arrow" style="font-size: 11px; color: #aaa;">▶</span>
+    </div>
+    <div id="cleaning-history-container" style="display:none;"></div>
+  </div>
 
   <!-- 洗車アコーディオン -->
   <div class="card" style="margin-bottom: 12px; margin-top: 4px;">
@@ -360,6 +374,11 @@ canvas { max-width: 100%; }
       <span id="carwash-arrow" style="font-size: 13px; color: #aaa;">▶</span>
     </div>
     <div id="carwash-form" style="display: none; margin-top: 12px;">
+      <!-- 日付選択 -->
+      <div class="row" style="margin-bottom: 10px;">
+        <span style="font-size: 12px; color: #aaa;">日付</span>
+        <input type="date" id="carwash-date" style="font-size: 12px; padding: 4px 8px; background: #2a2a2a; border: 0.5px solid #3a3a3a; border-radius: 6px; color: #e8e8e8;">
+      </div>
 
       <!-- STEP 1: 洗車屋選択 -->
       <div id="cw-step1">
@@ -665,7 +684,14 @@ canvas { max-width: 100%; }
     </div>
   </div>
 
-  <div id="carwash-history-container"></div>
+  <!-- 洗車履歴アコーディオン -->
+  <div id="carwash-history-accordion" style="margin-bottom: 4px;">
+    <div id="carwash-hist-toggle" class="row" style="cursor:pointer; padding: 8px 0;">
+      <span style="font-size: 12px; color: #aaa;">履歴を見る</span>
+      <span id="carwash-hist-arrow" style="font-size: 11px; color: #aaa;">▶</span>
+    </div>
+    <div id="carwash-history-container" style="display:none;"></div>
+  </div>
 
 </div>
 
@@ -823,11 +849,20 @@ canvas { max-width: 100%; }
       const MONTHLY_WORK_DAYS = 22;
       const remainingDays = MONTHLY_WORK_DAYS - workDays - leaveCount - absenceDays;
       const paceEl = document.getElementById('pace-detail');
-      if (remaining > 0 && remainingDays > 0) {
+      // 稼働日数があれば予想着地を計算(目標達成済みでも表示)
+      if (workDays > 0) {
         paceEl.style.display = 'block';
-        const dailyRequired = Math.ceil(remaining / remainingDays);
-        document.getElementById('remaining-days').textContent = remainingDays + '日';
-        document.getElementById('daily-required').textContent = fmtYen(dailyRequired);
+        const avgDaily = totalPure / workDays;
+        const projected = Math.round(avgDaily * MONTHLY_WORK_DAYS);
+        document.getElementById('projected-total').textContent = fmtYen(projected);
+        if (remaining > 0 && remainingDays > 0) {
+          const dailyRequired = Math.ceil(remaining / remainingDays);
+          document.getElementById('remaining-days').textContent = remainingDays + '日';
+          document.getElementById('daily-required').textContent = fmtYen(dailyRequired);
+        } else {
+          document.getElementById('remaining-days').textContent = remainingDays + '日';
+          document.getElementById('daily-required').textContent = '-';
+        }
       } else {
         paceEl.style.display = 'none';
       }
@@ -1127,12 +1162,12 @@ canvas { max-width: 100%; }
     if (total === 0) { showToast('品目を選んでください', true); return; }
     const key = getPeriodKey(expOffset);
     const detail = CLEANING_ITEMS.map((item, i) => cleaningCounts[i] > 0 ? `${item.name}×${cleaningCounts[i]}` : '').filter(Boolean).join(' ');
-    const record = { date: fmtDate(new Date()), amount: total, detail };
+    const dateVal = document.getElementById('cleaning-date').value || fmtDate(new Date());
+    const record = { date: dateVal, amount: total, detail };
     if (!cleaningData[key]) cleaningData[key] = [];
     cleaningData[key].push(record);
     saveCleaningData();
     cleaningCounts = CLEANING_ITEMS.map(() => 0);
-    // 保存後はアコーディオンを閉じる
     const form = document.getElementById('cleaning-form');
     const arrow = document.getElementById('cleaning-arrow');
     form.style.display = 'none';
@@ -1144,14 +1179,26 @@ canvas { max-width: 100%; }
   document.getElementById('exp-prev-period').addEventListener('click', () => { expOffset--; renderExpense(); });
   document.getElementById('exp-next-period').addEventListener('click', () => { expOffset++; renderExpense(); });
 
-  // アコーディオントグル
+  // クリーニングアコーディオントグル
   document.getElementById('cleaning-toggle').addEventListener('click', () => {
     const form = document.getElementById('cleaning-form');
     const arrow = document.getElementById('cleaning-arrow');
     const isOpen = form.style.display !== 'none';
     form.style.display = isOpen ? 'none' : 'block';
     arrow.textContent = isOpen ? '▶' : '▼';
-    if (!isOpen) renderExpense();
+    if (!isOpen) {
+      document.getElementById('cleaning-date').value = fmtDate(new Date());
+      renderExpense();
+    }
+  });
+
+  // クリーニング履歴アコーディオントグル
+  document.getElementById('cleaning-hist-toggle').addEventListener('click', () => {
+    const container = document.getElementById('cleaning-history-container');
+    const arrow = document.getElementById('cleaning-hist-arrow');
+    const isOpen = container.style.display !== 'none';
+    container.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent = isOpen ? '▶' : '▼';
   });
 
   loadCleaningData();
@@ -1293,7 +1340,8 @@ canvas { max-width: 100%; }
   function saveCwRecord(shop, amount, detail) {
     const key = getPeriodKey(expOffset);
     if (!carwashData[key]) carwashData[key] = [];
-    carwashData[key].push({ date: fmtDate(new Date()), shop, amount, detail });
+    const dateVal = document.getElementById('carwash-date').value || fmtDate(new Date());
+    carwashData[key].push({ date: dateVal, shop, amount, detail });
     saveCarwashData();
     // フォームを閉じてリセット
     document.getElementById('carwash-form').style.display = 'none';
@@ -1467,7 +1515,19 @@ canvas { max-width: 100%; }
     const isOpen = form.style.display !== 'none';
     form.style.display = isOpen ? 'none' : 'block';
     arrow.textContent = isOpen ? '▶' : '▼';
-    if (!isOpen) renderCarwashForm();
+    if (!isOpen) {
+      document.getElementById('carwash-date').value = fmtDate(new Date());
+      renderCarwashForm();
+    }
+  });
+
+  // 洗車履歴アコーディオントグル
+  document.getElementById('carwash-hist-toggle').addEventListener('click', () => {
+    const container = document.getElementById('carwash-history-container');
+    const arrow = document.getElementById('carwash-hist-arrow');
+    const isOpen = container.style.display !== 'none';
+    container.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent = isOpen ? '▶' : '▼';
   });
 
   // 設定の洗車料金保存
@@ -1671,11 +1731,14 @@ canvas { max-width: 100%; }
 
   document.getElementById('export-btn').addEventListener('click', () => {
     const sorted = Object.entries(allData).sort((a,b) => a[0].localeCompare(b[0]));
-    let csv = '日付,売上,実車高速,空車高速(自腹),純売上,実質手取り\n';
+    let csv = '日付,売上,実車高速,空車高速(自腹),純売上,実質手取り,出勤時刻,退勤時刻,区分\n';
     sorted.forEach(([date, e]) => {
       const tab = e.tab||0, jissya = e.jissya||0, jihara = e.jihara||0;
       const pure = tab - jissya;
-      csv += `${date},${tab},${jissya},${jihara},${pure},${pure-jihara}\n`;
+      const startTime = e.startTime || '';
+      const endTime = e.endTime || '';
+      const dayType = e.dayType || '';
+      csv += `${date},${tab},${jissya},${jihara},${pure},${pure-jihara},${startTime},${endTime},${dayType}\n`;
     });
     const bom = '\uFEFF';
     const blob = new Blob([bom + csv], { type: 'text/csv' });
@@ -1705,11 +1768,18 @@ canvas { max-width: 100%; }
           if (cols.length < 4) continue;
           const date = cols[0].trim();
           if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
-          allData[date] = {
+          const entry = {
             tab: parseInt(cols[1]) || 0,
             jissya: parseInt(cols[2]) || 0,
-            jihara: parseInt(cols[3]) || 0
+            jihara: parseInt(cols[3]) || 0,
           };
+          // 新フォーマット(9列)なら時刻・区分も復元
+          if (cols.length >= 9) {
+            if (cols[6]) entry.startTime = cols[6].trim();
+            if (cols[7]) entry.endTime = cols[7].trim();
+            if (cols[8]) entry.dayType = cols[8].trim();
+          }
+          allData[date] = entry;
           count++;
         }
         saveData();
