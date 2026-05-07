@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mk-sales-v35';
+const CACHE_NAME = 'mk-sales-v36';
 const urlsToCache = [
   './',
   './index.html',
