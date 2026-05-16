@@ -61,6 +61,50 @@ input, button {
 }
 input[type="number"] { font-size: 16px; }
 input:focus, button:focus { outline: 2px solid #534AB7; outline-offset: -2px; }
+
+/* チェックボックス・ラジオボタンのカスタムスタイル */
+input[type="checkbox"], input[type="radio"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #888;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: border-color 0.15s, background 0.15s;
+}
+input[type="checkbox"] { border-radius: 6px; }
+input[type="radio"] { border-radius: 50%; }
+
+input[type="checkbox"]:checked {
+  background: #C7A545;
+  border-color: #C7A545;
+}
+input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 6px;
+  width: 6px; height: 10px;
+  border: 2px solid #1a1a1a;
+  border-top: none; border-left: none;
+  transform: rotate(45deg);
+}
+input[type="radio"]:checked {
+  border-color: #C7A545;
+  background: transparent;
+}
+input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #C7A545;
+}
 button { cursor: pointer; -webkit-user-select: none; user-select: none; }
 button:active { transform: scale(0.98); }
 .btn-primary { background: #2c2c2a; color: #fff; border-color: #2c2c2a; font-weight: 500; }
@@ -78,6 +122,14 @@ button:active { transform: scale(0.98); }
 .bar-fill { height: 100%; transition: width 0.3s; }
 .del-btn { background: transparent; border: none; color: #A32D2D; padding: 4px 8px; font-size: 12px; cursor: pointer; }
 .icon-btn { padding: 6px 10px; font-size: 13px; }
+.cal-cell { border-radius: 6px; padding: 4px 2px; text-align: center; min-height: 46px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 2px; }
+.cal-cell.today { background: rgba(199,165,69,0.15); }
+.cal-cell.has-data { background: rgba(199,165,69,0.08); }
+.cal-day { font-size: 12px; font-weight: 500; line-height: 1.2; }
+.cal-amount { font-size: 9px; color: #C7A545; line-height: 1.2; font-weight: 500; }
+.cal-leave { font-size: 9px; color: #C7A545; font-weight: 500; }
+.cal-absence { font-size: 9px; color: #E05C5C; font-weight: 500; }
+.cal-empty { color: #555; }
 canvas { max-width: 100%; }
 .entry-row { background: #fff; border: 0.5px solid rgba(0,0,0,0.15); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
 </style>
@@ -104,7 +156,7 @@ canvas { max-width: 100%; }
     </div>
     <div id="input-form" style="display: none; margin-top: 12px;">
       <div style="margin-bottom: 8px;">
-        <label class="label">売上</label>
+        <label class="label">売上(タブ)</label>
         <input type="number" id="quick-tab" placeholder="0" inputmode="numeric" pattern="[0-9]*" style="width: 100%;">
       </div>
 
@@ -186,7 +238,7 @@ canvas { max-width: 100%; }
 
   <div class="grid-2">
     <div class="surface">
-      <div class="text-secondary">売上</div>
+      <div class="text-secondary">売上(タブ)</div>
       <div id="total-tab" class="big-number">¥0</div>
     </div>
     <div class="surface">
@@ -288,6 +340,29 @@ canvas { max-width: 100%; }
 </div>
 
 <div id="view-list" class="hidden">
+
+  <!-- カレンダー -->
+  <div class="card" style="margin-bottom: 12px; padding: 10px;">
+    <div class="row" style="margin-bottom: 8px;">
+      <div id="cal-period-label" style="font-size: 13px; font-weight: 500;"></div>
+      <div style="text-align: right;">
+        <div style="font-size: 10px; color: #aaa;">純売上合計</div>
+        <div id="cal-total" style="font-size: 14px; font-weight: 500; color: #C7A545;">¥0</div>
+      </div>
+    </div>
+    <!-- 曜日ヘッダー -->
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 4px;">
+      <div style="text-align:center;font-size:10px;color:#888;">日</div>
+      <div style="text-align:center;font-size:10px;color:#888;">月</div>
+      <div style="text-align:center;font-size:10px;color:#888;">火</div>
+      <div style="text-align:center;font-size:10px;color:#888;">水</div>
+      <div style="text-align:center;font-size:10px;color:#888;">木</div>
+      <div style="text-align:center;font-size:10px;color:#888;">金</div>
+      <div style="text-align:center;font-size:10px;color:#888;">土</div>
+    </div>
+    <div id="cal-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;"></div>
+  </div>
+
   <div id="list-container"></div>
 </div>
 
@@ -806,6 +881,8 @@ canvas { max-width: 100%; }
       }
     });
     const totalPure = totalTab - totalJissya;
+    const totalTax = Math.floor(totalTab / 1.1 * 0.1); // 消費税(逆算・切り捨て)
+    const totalPureAfterTax = totalPure - totalTax; // 純売上(高速+消費税抜き)
 
     // クリーニング累計
     const cleaningKey = getPeriodKey(viewOffset);
@@ -816,10 +893,10 @@ canvas { max-width: 100%; }
     const carwashRecords = carwashData[cleaningKey] || [];
     const totalCarwash = carwashRecords.reduce((sum, r) => sum + r.amount, 0);
 
-    const netAmount = totalPure - totalJihara - totalCleaning - totalCarwash;
+    const netAmount = totalPureAfterTax - totalJihara - totalCleaning - totalCarwash;
 
     document.getElementById('total-tab').textContent = fmtYen(totalTab);
-    document.getElementById('total-pure').textContent = fmtYen(totalPure);
+    document.getElementById('total-pure').textContent = fmtYen(totalPureAfterTax);
     document.getElementById('jissya-total').textContent = '-' + fmtYen(totalJissya);
     document.getElementById('jihara-total').textContent = '-' + fmtYen(totalJihara);
     document.getElementById('cleaning-summary').textContent = '-' + fmtYen(totalCleaning);
@@ -827,7 +904,7 @@ canvas { max-width: 100%; }
     document.getElementById('net-amount').textContent = fmtYen(netAmount);
     document.getElementById('work-days').textContent = workDays + '日';
     document.getElementById('remaining-work-days').textContent = Math.max(0, 22 - workDays - leaveCount - absenceDays) + '日';
-    document.getElementById('avg-daily').textContent = workDays > 0 ? fmtYen(totalPure / workDays) : '¥0';
+    document.getElementById('avg-daily').textContent = workDays > 0 ? fmtYen(totalPureAfterTax / workDays) : '¥0';
     document.getElementById('max-daily').textContent = fmtYen(maxPure);
     document.getElementById('remaining-leave').textContent = leaveDays !== null ? leaveDays + '日' : '--';
 
@@ -842,11 +919,11 @@ canvas { max-width: 100%; }
 
     if (goal > 0) {
       document.getElementById('goal-card').classList.remove('hidden');
-      const pct = Math.round(totalPure / goal * 100);
+      const pct = Math.round(totalPureAfterTax / goal * 100);
       document.getElementById('goal-percent').textContent = pct + '%';
       document.getElementById('goal-bar').style.width = Math.min(pct, 100) + '%';
       document.getElementById('goal-bar').style.background = pct >= 100 ? '#1D9E75' : pct >= 70 ? '#C9A961' : '#888';
-      const remaining = goal - totalPure;
+      const remaining = goal - totalPureAfterTax;
       document.getElementById('goal-detail').textContent = remaining > 0
         ? `あと ${fmtYen(remaining)}`
         : `達成! 超過 ${fmtYen(-remaining)}`;
@@ -857,7 +934,7 @@ canvas { max-width: 100%; }
       // 稼働日数があれば予想着地を計算(目標達成済みでも表示)
       if (workDays > 0) {
         paceEl.style.display = 'block';
-        const avgDaily = totalPure / workDays;
+        const avgDaily = totalPureAfterTax / workDays;
         const projected = Math.round(avgDaily * MONTHLY_WORK_DAYS);
         document.getElementById('projected-total').textContent = fmtYen(projected);
         if (remaining > 0 && remainingDays > 0) {
@@ -894,7 +971,11 @@ canvas { max-width: 100%; }
       const d = new Date(e.date);
       return `${d.getMonth()+1}/${d.getDate()}`;
     });
-    const data = workEntries.map(e => (e.tab || 0) - (e.jissya || 0));
+    const data = workEntries.map(e => {
+      const pure = (e.tab || 0) - (e.jissya || 0);
+      const tax = Math.floor((e.tab || 0) / 1.1 * 0.1);
+      return pure - tax;
+    });
 
     const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     const textColor = isDark ? '#aaa' : '#5F5E5A';
@@ -915,7 +996,86 @@ canvas { max-width: 100%; }
     });
   }
 
+  function renderCalendar() {
+    const { start, end } = getPeriod(viewOffset);
+    const label = `${start.getMonth()+1}/${start.getDate()} - ${end.getMonth()+1}/${end.getDate()}`;
+    document.getElementById('cal-period-label').textContent = label;
+
+    // 期間内のデータをマップ化
+    const entries = getEntriesInPeriod(viewOffset);
+    const dataMap = {};
+    let calTotal = 0;
+    entries.forEach(e => {
+      const pure = (e.tab||0) - (e.jissya||0);
+      const tax = Math.floor((e.tab||0) / 1.1 * 0.1);
+      const pureAfterTax = pure - tax;
+      dataMap[e.date] = { amount: pureAfterTax, dayType: e.dayType || '' };
+      if (!e.dayType) calTotal += pureAfterTax;
+    });
+    document.getElementById('cal-total').textContent = fmtYen(calTotal);
+
+    const today = fmtDate(new Date());
+    const grid = document.getElementById('cal-grid');
+
+    // 締め期間の全日付を生成(21日〜翌20日)
+    const days = [];
+    const cur = new Date(start);
+    while (cur <= end) {
+      days.push(fmtDate(new Date(cur)));
+      cur.setDate(cur.getDate() + 1);
+    }
+
+    // 最初の日の曜日に合わせて空白セルを追加
+    const firstDow = new Date(days[0]).getDay();
+    let html = '';
+    for (let i = 0; i < firstDow; i++) {
+      html += '<div class="cal-cell cal-empty"></div>';
+    }
+
+    days.forEach(date => {
+      const d = new Date(date);
+      const day = d.getDate();
+      const dow = d.getDay();
+      const data = dataMap[date];
+      const isToday = date === today;
+
+      let cellClass = 'cal-cell';
+      if (isToday) cellClass += ' today';
+      else if (data) cellClass += ' has-data';
+
+      let dayColor = '#e8e8e8';
+      if (dow === 0) dayColor = '#E05C5C';
+      else if (dow === 6) dayColor = '#7ab3e0';
+
+      let content = '';
+      if (data) {
+        if (data.dayType === 'leave') {
+          content = `<span class="cal-leave">有給</span>`;
+        } else if (data.dayType === 'absence') {
+          content = `<span class="cal-absence">欠勤</span>`;
+        } else if (data.amount !== 0) {
+          const amt = data.amount >= 10000
+            ? (data.amount / 10000).toFixed(1) + '万'
+            : data.amount >= 1000
+              ? (data.amount / 1000).toFixed(0) + '千'
+              : data.amount;
+          content = `<span class="cal-amount">${amt}</span>`;
+        }
+      }
+
+      html += `<div class="${cellClass}">
+        <span class="cal-day" style="color:${dayColor};">${day}</span>
+        ${content}
+      </div>`;
+    });
+
+    grid.innerHTML = html;
+  }
+
   function renderList() {
+    // カレンダー描画
+    renderCalendar();
+
     const container = document.getElementById('list-container');
     const entries = getEntriesInPeriod(viewOffset);
     if (entries.length === 0) {
@@ -940,6 +1100,8 @@ canvas { max-width: 100%; }
       }
       
       const pure = (e.tab||0) - (e.jissya||0);
+      const tax = Math.floor((e.tab||0) / 1.1 * 0.1);
+      const pureAfterTax = pure - tax;
       const jissya = e.jissya || 0;
       const jihara = e.jihara || 0;
       let hoursText = '';
@@ -952,12 +1114,12 @@ canvas { max-width: 100%; }
         const h = Math.floor(mins / 60);
         const m = mins % 60;
         const hourlyRate = Math.round(pure / (mins / 60));
-        hoursText = `${e.startTime}〜${e.endTime} / 仕業${h}h${m > 0 ? m + 'm' : ''} / 時給 ${fmtYen(hourlyRate)}`;
+        hoursText = `${e.startTime}〜${e.endTime} / 勤務${h}h${m > 0 ? m + 'm' : ''} / 時給 ${fmtYen(hourlyRate)}`;
       }
       return `<div class="entry-row">
         <div class="row" style="margin-bottom: 6px;">
           <span style="font-weight: 500;">${e.date.slice(5)} (${wd})</span>
-          <span style="font-size: 16px; font-weight: 500;">${fmtYen(pure)}</span>
+          <span style="font-size: 16px; font-weight: 500;">${fmtYen(pureAfterTax)}</span>
         </div>
         <div class="text-secondary" style="display: flex; gap: 12px; flex-wrap: wrap;">
           <span>売上 ${fmtYen(e.tab||0)}</span>
@@ -1572,7 +1734,7 @@ canvas { max-width: 100%; }
       mins += 60; // みなし1時間
       const h = Math.floor(mins / 60);
       const m = mins % 60;
-      preview.textContent = `仕業時間: ${h}時間${m > 0 ? m + '分' : ''}(実働 + みなし1時間)`;
+      preview.textContent = `勤務時間: ${h}時間${m > 0 ? m + '分' : ''}(実働 + みなし1時間)`;
     } else {
       preview.textContent = '';
     }
