@@ -341,8 +341,8 @@ canvas { max-width: 100%; }
 
 <div id="view-list" class="hidden">
 
-  <!-- カレンダー -->
-  <div class="card" style="margin-bottom: 12px; padding: 10px;">
+  <!-- カレンダー(スクロールしても上に固定) -->
+  <div class="card" style="margin-bottom: 12px; padding: 10px; position: sticky; top: 0; z-index: 10; background: #262626;">
     <div class="row" style="margin-bottom: 8px;">
       <div id="cal-period-label" style="font-size: 13px; font-weight: 500;"></div>
       <div style="text-align: right;">
