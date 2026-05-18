@@ -125,6 +125,9 @@ button:active { transform: scale(0.98); }
 .cal-cell { border-radius: 6px; padding: 4px 2px; text-align: center; min-height: 46px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 2px; }
 .cal-cell.today { background: rgba(199,165,69,0.15); }
 .cal-cell.has-data { background: rgba(199,165,69,0.08); }
+.cal-cell.holiday { background: rgba(100,160,220,0.15); }
+.cal-cell.holiday.has-data { background: rgba(100,160,220,0.12); }
+.cal-holiday { font-size: 9px; color: #7ab3e0; font-weight: 500; }
 .cal-day { font-size: 12px; font-weight: 500; line-height: 1.2; }
 .cal-amount { font-size: 9px; color: #C7A545; line-height: 1.2; font-weight: 500; }
 .cal-leave { font-size: 9px; color: #C7A545; font-weight: 500; }
@@ -137,7 +140,7 @@ canvas { max-width: 100%; }
 <body>
 <div class="container">
 
-<div class="tabs">
+<div class="tabs" style="position: sticky; top: 0; z-index: 20; background: #1a1a1a; margin-bottom: 0; padding-bottom: 0;">
   <button id="tab-summary" class="tab tab-active">サマリー</button>
   <button id="tab-list" class="tab">日別</button>
   <button id="tab-expense" class="tab">経費</button>
@@ -342,7 +345,7 @@ canvas { max-width: 100%; }
 <div id="view-list" class="hidden">
 
   <!-- カレンダー(スクロールしても上に固定) -->
-  <div class="card" style="margin-bottom: 12px; padding: 10px; position: sticky; top: 0; z-index: 10; background: #262626;">
+  <div class="card" style="margin-bottom: 12px; padding: 10px; position: sticky; top: 38px; z-index: 10; background: #262626;">
     <div class="row" style="margin-bottom: 8px;">
       <div id="cal-period-label" style="font-size: 13px; font-weight: 500;"></div>
       <div style="text-align: right;">
@@ -784,9 +787,11 @@ canvas { max-width: 100%; }
   const STORAGE_KEY = 'mk_sales_data';
   const GOAL_KEY = 'mk_sales_goal';
   const LEAVE_DAYS_KEY = 'mk_leave_days';
+  const HOLIDAY_KEY = 'mk_holidays';
   let allData = {};
   let goal = 0;
-  let leaveDays = null;  // null = 未設定
+  let leaveDays = null;
+  let holidays = {}; // { '2026-05-01': true, ... }
   let viewOffset = 0;
   let chart = null;
 
@@ -798,6 +803,10 @@ canvas { max-width: 100%; }
     try {
       goal = parseInt(localStorage.getItem(GOAL_KEY)) || 0;
     } catch (e) { goal = 0; }
+    try {
+      const raw = localStorage.getItem(HOLIDAY_KEY);
+      holidays = raw ? JSON.parse(raw) : {};
+    } catch (e) { holidays = {}; }
     try {
       const raw = localStorage.getItem(LEAVE_DAYS_KEY);
       leaveDays = raw !== null ? parseInt(raw) : null;
@@ -1038,17 +1047,22 @@ canvas { max-width: 100%; }
       const dow = d.getDay();
       const data = dataMap[date];
       const isToday = date === today;
+      const isHoliday = holidays[date] === true;
 
       let cellClass = 'cal-cell';
+      if (isHoliday) cellClass += ' holiday';
       if (isToday) cellClass += ' today';
-      else if (data) cellClass += ' has-data';
+      else if (data && !isHoliday) cellClass += ' has-data';
+      else if (data && isHoliday) cellClass += ' has-data';
 
       let dayColor = '#e8e8e8';
       if (dow === 0) dayColor = '#E05C5C';
       else if (dow === 6) dayColor = '#7ab3e0';
 
       let content = '';
-      if (data) {
+      if (isHoliday) {
+        content = `<span class="cal-holiday">公</span>`;
+      } else if (data) {
         if (data.dayType === 'leave') {
           content = `<span class="cal-leave">有給</span>`;
         } else if (data.dayType === 'absence') {
@@ -1063,13 +1077,27 @@ canvas { max-width: 100%; }
         }
       }
 
-      html += `<div class="${cellClass}">
+      html += `<div class="${cellClass}" data-date="${date}" style="cursor:pointer;">
         <span class="cal-day" style="color:${dayColor};">${day}</span>
         ${content}
       </div>`;
     });
 
     grid.innerHTML = html;
+
+    // タップで公休日トグル
+    grid.querySelectorAll('.cal-cell[data-date]').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const date = cell.getAttribute('data-date');
+        if (holidays[date]) {
+          delete holidays[date];
+        } else {
+          holidays[date] = true;
+        }
+        localStorage.setItem(HOLIDAY_KEY, JSON.stringify(holidays));
+        renderCalendar();
+      });
+    });
   }
 
   function renderList() {
@@ -1196,7 +1224,12 @@ canvas { max-width: 100%; }
         view.classList.add('hidden');
       }
     });
-    if (tab === 'summary') renderSummary();
+    if (tab === 'summary') {
+      // 日付を常に当日にリセット
+      document.getElementById('quick-date').value = fmtDate(new Date());
+      loadQuickInput();
+      renderSummary();
+    }
     if (tab === 'list') renderList();
     if (tab === 'expense') renderExpense();
     if (tab === 'settings') {
@@ -1867,12 +1900,7 @@ canvas { max-width: 100%; }
     saveData();
 
     clearInputs();
-    // 売上が入力されている時だけ翌日に進む。時刻のみ保存の場合はその日のまま
-    if (tab > 0) {
-      const next = new Date(date);
-      next.setDate(next.getDate() + 1);
-      document.getElementById('quick-date').value = fmtDate(next);
-    }
+    // 保存後は日付をそのまま維持(翌日に進まない)
     loadQuickInput();
 
     showToast('保存しました');
@@ -1993,7 +2021,11 @@ canvas { max-width: 100%; }
           allData[date] = entry;
           count++;
         }
-        saveData(); renderSummary();
+        saveData(); 
+        // 設定タブの表示を更新
+        if (goal > 0) document.getElementById('input-goal').value = goal;
+        if (leaveDays !== null) document.getElementById('input-leave-days').value = leaveDays;
+        renderSummary();
         showToast(`売上${count}件インポートしました`);
       } catch (err) { showToast('インポート失敗', true); }
     };
