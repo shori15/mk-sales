@@ -348,7 +348,11 @@ canvas { max-width: 100%; }
   <!-- カレンダー(スクロールしても上に固定) -->
   <div class="card" style="margin-bottom: 12px; padding: 10px; position: sticky; top: 38px; z-index: 10; background: #262626;">
     <div class="row" style="margin-bottom: 8px;">
-      <div id="cal-period-label" style="font-size: 13px; font-weight: 500;"></div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <button id="cal-prev" class="icon-btn">←</button>
+        <div id="cal-period-label" style="font-size: 13px; font-weight: 500;"></div>
+        <button id="cal-next" class="icon-btn">→</button>
+      </div>
       <div style="display:flex;gap:12px;align-items:flex-end;">
         <div style="text-align: right;">
           <div style="font-size: 10px; color: #7ab3e0;">公休</div>
@@ -1756,6 +1760,9 @@ canvas { max-width: 100%; }
 
   document.getElementById('prev-period').addEventListener('click', () => { viewOffset--; renderSummary(); });
   document.getElementById('next-period').addEventListener('click', () => { viewOffset++; renderSummary(); });
+
+  document.getElementById('cal-prev').addEventListener('click', () => { viewOffset--; renderList(); });
+  document.getElementById('cal-next').addEventListener('click', () => { viewOffset++; renderList(); });
 
   document.getElementById('quick-date').value = fmtDate(new Date());
   document.getElementById('quick-date').addEventListener('change', loadQuickInput);
