@@ -348,9 +348,15 @@ canvas { max-width: 100%; }
   <div class="card" style="margin-bottom: 12px; padding: 10px; position: sticky; top: 38px; z-index: 10; background: #262626;">
     <div class="row" style="margin-bottom: 8px;">
       <div id="cal-period-label" style="font-size: 13px; font-weight: 500;"></div>
-      <div style="text-align: right;">
-        <div style="font-size: 10px; color: #aaa;">純売上合計</div>
-        <div id="cal-total" style="font-size: 14px; font-weight: 500; color: #C7A545;">¥0</div>
+      <div style="display:flex;gap:12px;align-items:flex-end;">
+        <div style="text-align: right;">
+          <div style="font-size: 10px; color: #7ab3e0;">公休</div>
+          <div id="cal-holiday-count" style="font-size: 14px; font-weight: 500; color: #7ab3e0;">0日</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 10px; color: #aaa;">純売上合計</div>
+          <div id="cal-total" style="font-size: 14px; font-weight: 500; color: #C7A545;">¥0</div>
+        </div>
       </div>
     </div>
     <!-- 曜日ヘッダー -->
@@ -383,13 +389,15 @@ canvas { max-width: 100%; }
     </div>
 
     <div style="font-weight: 500; margin: 16px 0 8px;">データ管理</div>
-    <button id="export-btn" style="width: 100%; padding: 10px; margin-bottom: 8px;">全データをエクスポート(3ファイル)</button>
+    <button id="export-btn" style="width: 100%; padding: 10px; margin-bottom: 8px;">全データをエクスポート(4ファイル)</button>
     <button id="import-btn" style="width: 100%; padding: 10px; margin-bottom: 4px;">売上データをインポート</button>
     <button id="import-cleaning-btn" style="width: 100%; padding: 10px; margin-bottom: 4px;">クリーニングデータをインポート</button>
-    <button id="import-carwash-btn" style="width: 100%; padding: 10px; margin-bottom: 8px;">洗車データをインポート</button>
+    <button id="import-carwash-btn" style="width: 100%; padding: 10px; margin-bottom: 4px;">洗車データをインポート</button>
+    <button id="import-holidays-btn" style="width: 100%; padding: 10px; margin-bottom: 8px;">公休日データをインポート</button>
     <input type="file" id="import-file" accept=".csv" style="display: none;">
     <input type="file" id="import-cleaning-file" accept=".csv" style="display: none;">
     <input type="file" id="import-carwash-file" accept=".csv" style="display: none;">
+    <input type="file" id="import-holidays-file" accept=".csv" style="display: none;">
     <button id="reset-btn" style="width: 100%; padding: 10px; color: #A32D2D;">全データを削除</button>
 
     <div class="text-tertiary" style="margin-top: 16px; line-height: 1.6;">
@@ -1024,6 +1032,10 @@ canvas { max-width: 100%; }
     document.getElementById('cal-total').textContent = fmtYen(calTotal);
 
     const today = fmtDate(new Date());
+    // 公休日数カウント(期間内)
+    const holidayCount = days.filter(d => holidays[d]).length;
+    document.getElementById('cal-holiday-count').textContent = holidayCount + '日';
+
     const grid = document.getElementById('cal-grid');
 
     // 締め期間の全日付を生成(21日〜翌20日)
@@ -1061,7 +1073,7 @@ canvas { max-width: 100%; }
 
       let content = '';
       if (isHoliday) {
-        content = `<span class="cal-holiday">公</span>`;
+        content = `<span class="cal-holiday">公休</span>`;
       } else if (data) {
         if (data.dayType === 'leave') {
           content = `<span class="cal-leave">有給</span>`;
@@ -1964,9 +1976,15 @@ canvas { max-width: 100%; }
       });
     });
 
+    // 4. 公休日データ
+    let csv4 = '日付\n';
+    Object.keys(holidays).sort().forEach(date => {
+      if (holidays[date]) csv4 += `${date}\n`;
+    });
+
     // 順番にダウンロード
     const bom = '\uFEFF';
-    [[csv1, `mk_sales_${today}.csv`], [csv2, `mk_cleaning_${today}.csv`], [csv3, `mk_carwash_${today}.csv`]].forEach(([csv, filename], i) => {
+    [[csv1, `mk_sales_${today}.csv`], [csv2, `mk_cleaning_${today}.csv`], [csv3, `mk_carwash_${today}.csv`], [csv4, `mk_holidays_${today}.csv`]].forEach(([csv, filename], i) => {
       setTimeout(() => {
         const blob = new Blob([bom + csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
@@ -1975,7 +1993,7 @@ canvas { max-width: 100%; }
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       }, i * 500);
     });
-    showToast('3ファイルをエクスポートしました');
+    showToast('4ファイルをエクスポートしました');
   });
 
   document.getElementById('import-btn').addEventListener('click', () => {
@@ -1986,6 +2004,9 @@ canvas { max-width: 100%; }
   });
   document.getElementById('import-carwash-btn').addEventListener('click', () => {
     document.getElementById('import-carwash-file').click();
+  });
+  document.getElementById('import-holidays-btn').addEventListener('click', () => {
+    document.getElementById('import-holidays-file').click();
   });
 
   document.getElementById('import-file').addEventListener('change', (e) => {
@@ -2086,6 +2107,29 @@ canvas { max-width: 100%; }
         }
         saveCarwashData();
         showToast(`洗車${count}件インポートしました`);
+      } catch (err) { showToast('インポート失敗', true); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  document.getElementById('import-holidays-file').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const text = ev.target.result.replace(/^\uFEFF/, '');
+        const lines = text.split(/\r?\n/);
+        let count = 0;
+        for (let i = 1; i < lines.length; i++) {
+          const date = lines[i].trim();
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+          holidays[date] = true;
+          count++;
+        }
+        localStorage.setItem(HOLIDAY_KEY, JSON.stringify(holidays));
+        showToast(`公休日${count}件インポートしました`);
       } catch (err) { showToast('インポート失敗', true); }
     };
     reader.readAsText(file);
