@@ -1034,11 +1034,6 @@ canvas { max-width: 100%; }
     document.getElementById('cal-total').textContent = fmtYen(calTotal);
 
     const today = fmtDate(new Date());
-    // 公休日数カウント(期間内)
-    const holidayCount = days.filter(d => holidays[d]).length;
-    document.getElementById('cal-holiday-count').textContent = holidayCount + '日';
-
-    const grid = document.getElementById('cal-grid');
 
     // 締め期間の全日付を生成(21日〜翌20日)
     const days = [];
@@ -1047,6 +1042,12 @@ canvas { max-width: 100%; }
       days.push(fmtDate(new Date(cur)));
       cur.setDate(cur.getDate() + 1);
     }
+
+    // 公休日数カウント(期間内)
+    const holidayCount = days.filter(d => holidays[d]).length;
+    document.getElementById('cal-holiday-count').textContent = holidayCount + '日';
+
+    const grid = document.getElementById('cal-grid');
 
     // 最初の日の曜日に合わせて空白セルを追加
     const firstDow = new Date(days[0]).getDay();
