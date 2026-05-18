@@ -10,6 +10,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>MK売上管理</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body {
@@ -389,12 +390,13 @@ canvas { max-width: 100%; }
     </div>
 
     <div style="font-weight: 500; margin: 16px 0 8px;">データ管理</div>
-    <button id="export-btn" style="width: 100%; padding: 10px; margin-bottom: 8px;">全データをエクスポート(4ファイル)</button>
-    <button id="import-btn" style="width: 100%; padding: 10px; margin-bottom: 4px;">売上データをインポート</button>
-    <button id="import-cleaning-btn" style="width: 100%; padding: 10px; margin-bottom: 4px;">クリーニングデータをインポート</button>
-    <button id="import-carwash-btn" style="width: 100%; padding: 10px; margin-bottom: 4px;">洗車データをインポート</button>
-    <button id="import-holidays-btn" style="width: 100%; padding: 10px; margin-bottom: 8px;">公休日データをインポート</button>
-    <input type="file" id="import-file" accept=".csv" style="display: none;">
+    <button id="export-btn" style="width: 100%; padding: 10px; margin-bottom: 8px;">📦 全データをエクスポート(ZIP)</button>
+    <button id="import-btn" style="width: 100%; padding: 10px; margin-bottom: 4px;">📥 ZIPからインポート</button>
+    <input type="file" id="import-file" accept=".zip,.csv" style="display: none;">
+    <div style="margin: 8px 0 4px; font-size: 11px; color: #777;">旧バージョンからの移行用(CSV個別)</div>
+    <button id="import-cleaning-btn" style="width: 100%; padding: 10px; margin-bottom: 4px;">📥 クリーニングCSVをインポート</button>
+    <button id="import-carwash-btn" style="width: 100%; padding: 10px; margin-bottom: 4px;">📥 洗車CSVをインポート</button>
+    <button id="import-holidays-btn" style="width: 100%; padding: 10px; margin-bottom: 8px;">📥 公休日CSVをインポート</button>
     <input type="file" id="import-cleaning-file" accept=".csv" style="display: none;">
     <input type="file" id="import-carwash-file" accept=".csv" style="display: none;">
     <input type="file" id="import-holidays-file" accept=".csv" style="display: none;">
@@ -1940,10 +1942,10 @@ canvas { max-width: 100%; }
     renderSummary();
   });
 
-  document.getElementById('export-btn').addEventListener('click', () => {
+  document.getElementById('export-btn').addEventListener('click', async () => {
     const today = fmtDate(new Date());
+    const bom = '\uFEFF';
 
-    // 1. 売上データ(有給日数も末尾に記載)
     const sorted = Object.entries(allData).sort((a,b) => a[0].localeCompare(b[0]));
     let csv1 = '日付,売上,実車高速,空車高速(自腹),純売上,実質手取り,出勤時刻,退勤時刻,区分\n';
     sorted.forEach(([date, e]) => {
@@ -1951,54 +1953,43 @@ canvas { max-width: 100%; }
       const pure = tab - jissya;
       csv1 += `${date},${tab},${jissya},${jihara},${pure},${pure-jihara},${e.startTime||''},${e.endTime||''},${e.dayType||''}\n`;
     });
-    // 有給日数を末尾に追記
-    if (leaveDays !== null) {
-      csv1 += `#保有有給日数,${leaveDays}\n`;
-    }
-    // 月間目標を末尾に追記
-    if (goal > 0) {
-      csv1 += `#月間目標,${goal}\n`;
-    }
+    if (leaveDays !== null) csv1 += `#保有有給日数,${leaveDays}\n`;
+    if (goal > 0) csv1 += `#月間目標,${goal}\n`;
 
-    // 2. クリーニングデータ
     let csv2 = '期間キー,日付,金額,内訳\n';
     Object.entries(cleaningData).forEach(([key, records]) => {
-      records.forEach(r => {
-        csv2 += `${key},${r.date},${r.amount},"${r.detail}"\n`;
-      });
+      records.forEach(r => { csv2 += `${key},${r.date},${r.amount},"${r.detail}"\n`; });
     });
 
-    // 3. 洗車データ
     let csv3 = '期間キー,日付,店舗,金額,内訳\n';
     Object.entries(carwashData).forEach(([key, records]) => {
-      records.forEach(r => {
-        csv3 += `${key},${r.date},${r.shop},${r.amount},"${r.detail}"\n`;
-      });
+      records.forEach(r => { csv3 += `${key},${r.date},${r.shop},${r.amount},"${r.detail}"\n`; });
     });
 
-    // 4. 公休日データ
     let csv4 = '日付\n';
-    Object.keys(holidays).sort().forEach(date => {
-      if (holidays[date]) csv4 += `${date}\n`;
-    });
+    Object.keys(holidays).sort().forEach(date => { if (holidays[date]) csv4 += `${date}\n`; });
 
-    // 順番にダウンロード
-    const bom = '\uFEFF';
-    [[csv1, `mk_sales_${today}.csv`], [csv2, `mk_cleaning_${today}.csv`], [csv3, `mk_carwash_${today}.csv`], [csv4, `mk_holidays_${today}.csv`]].forEach(([csv, filename], i) => {
-      setTimeout(() => {
-        const blob = new Blob([bom + csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = filename; a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      }, i * 500);
-    });
-    showToast('4ファイルをエクスポートしました');
+    const zip = new JSZip();
+    zip.file('mk_sales.csv', bom + csv1);
+    zip.file('mk_cleaning.csv', bom + csv2);
+    zip.file('mk_carwash.csv', bom + csv3);
+    zip.file('mk_holidays.csv', bom + csv4);
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mk_backup_${today}.zip`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast('ZIPエクスポート完了');
   });
 
   document.getElementById('import-btn').addEventListener('click', () => {
     document.getElementById('import-file').click();
   });
+
+  // 旧バージョン移行用: CSV個別インポート
   document.getElementById('import-cleaning-btn').addEventListener('click', () => {
     document.getElementById('import-cleaning-file').click();
   });
@@ -2009,13 +2000,83 @@ canvas { max-width: 100%; }
     document.getElementById('import-holidays-file').click();
   });
 
-  document.getElementById('import-file').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  document.getElementById('import-cleaning-file').addEventListener('change', (e) => {
+    const file = e.target.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
         const text = ev.target.result.replace(/^\uFEFF/, '');
+        const lines = text.split(/\r?\n/); let count = 0;
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(','); if (cols.length < 4) continue;
+          const key = cols[0].trim(); const date = cols[1].trim();
+          const amount = parseInt(cols[2]) || 0;
+          const detail = cols[3].replace(/^"|"$/g, '');
+          if (!key || !date) continue;
+          if (!cleaningData[key]) cleaningData[key] = [];
+          cleaningData[key].push({ date, amount, detail }); count++;
+        }
+        saveCleaningData(); showToast(`クリーニング${count}件インポートしました`);
+      } catch (err) { showToast('インポート失敗', true); }
+    };
+    reader.readAsText(file); e.target.value = '';
+  });
+
+  document.getElementById('import-carwash-file').addEventListener('change', (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const text = ev.target.result.replace(/^\uFEFF/, '');
+        const lines = text.split(/\r?\n/); let count = 0;
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(','); if (cols.length < 5) continue;
+          const key = cols[0].trim(); const date = cols[1].trim();
+          const shop = cols[2].trim(); const amount = parseInt(cols[3]) || 0;
+          const detail = cols[4].replace(/^"|"$/g, '');
+          if (!key || !date) continue;
+          if (!carwashData[key]) carwashData[key] = [];
+          carwashData[key].push({ date, shop, amount, detail }); count++;
+        }
+        saveCarwashData(); showToast(`洗車${count}件インポートしました`);
+      } catch (err) { showToast('インポート失敗', true); }
+    };
+    reader.readAsText(file); e.target.value = '';
+  });
+
+  document.getElementById('import-holidays-file').addEventListener('change', (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const text = ev.target.result.replace(/^\uFEFF/, '');
+        const lines = text.split(/\r?\n/); let count = 0;
+        for (let i = 1; i < lines.length; i++) {
+          const date = lines[i].trim();
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+          holidays[date] = true; count++;
+        }
+        localStorage.setItem(HOLIDAY_KEY, JSON.stringify(holidays));
+        showToast(`公休日${count}件インポートしました`);
+      } catch (err) { showToast('インポート失敗', true); }
+    };
+    reader.readAsText(file); e.target.value = '';
+  });
+
+  document.getElementById('import-file').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // ZIPかCSVか判断
+    if (file.name.endsWith('.zip')) {
+      // ZIPインポート
+      try {
+        const zip = await JSZip.loadAsync(file);
+
+      // 売上CSV
+      const salesFile = zip.file('mk_sales.csv');
+      if (salesFile) {
+        const text = (await salesFile.async('text')).replace(/^\uFEFF/, '');
         const lines = text.split(/\r?\n/);
         let count = 0;
         for (let i = 1; i < lines.length; i++) {
@@ -2023,7 +2084,6 @@ canvas { max-width: 100%; }
           if (cols.length < 4) continue;
           const date = cols[0].trim();
           if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-            // 日付形式でない行は設定値として処理
             if (cols[0].trim() === '#保有有給日数' && cols[1]) {
               leaveDays = parseInt(cols[1]) || 0;
               localStorage.setItem(LEAVE_DAYS_KEY, String(leaveDays));
@@ -2042,99 +2102,105 @@ canvas { max-width: 100%; }
           allData[date] = entry;
           count++;
         }
-        saveData(); 
-        // 設定タブの表示を更新
+        saveData();
         if (goal > 0) document.getElementById('input-goal').value = goal;
         if (leaveDays !== null) document.getElementById('input-leave-days').value = leaveDays;
-        renderSummary();
-        showToast(`売上${count}件インポートしました`);
-      } catch (err) { showToast('インポート失敗', true); }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  });
+      }
 
-  document.getElementById('import-cleaning-file').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const text = ev.target.result.replace(/^\uFEFF/, '');
+      // クリーニングCSV
+      const cleanFile = zip.file('mk_cleaning.csv');
+      if (cleanFile) {
+        const text = (await cleanFile.async('text')).replace(/^\uFEFF/, '');
         const lines = text.split(/\r?\n/);
-        let count = 0;
         for (let i = 1; i < lines.length; i++) {
           const cols = lines[i].split(',');
           if (cols.length < 4) continue;
-          const key = cols[0].trim();
-          const date = cols[1].trim();
+          const key = cols[0].trim(); const date = cols[1].trim();
           const amount = parseInt(cols[2]) || 0;
           const detail = cols[3].replace(/^"|"$/g, '');
           if (!key || !date) continue;
           if (!cleaningData[key]) cleaningData[key] = [];
           cleaningData[key].push({ date, amount, detail });
-          count++;
         }
         saveCleaningData();
-        showToast(`クリーニング${count}件インポートしました`);
-      } catch (err) { showToast('インポート失敗', true); }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  });
+      }
 
-  document.getElementById('import-carwash-file').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const text = ev.target.result.replace(/^\uFEFF/, '');
+      // 洗車CSV
+      const carwashFile = zip.file('mk_carwash.csv');
+      if (carwashFile) {
+        const text = (await carwashFile.async('text')).replace(/^\uFEFF/, '');
         const lines = text.split(/\r?\n/);
-        let count = 0;
         for (let i = 1; i < lines.length; i++) {
           const cols = lines[i].split(',');
           if (cols.length < 5) continue;
-          const key = cols[0].trim();
-          const date = cols[1].trim();
-          const shop = cols[2].trim();
-          const amount = parseInt(cols[3]) || 0;
+          const key = cols[0].trim(); const date = cols[1].trim();
+          const shop = cols[2].trim(); const amount = parseInt(cols[3]) || 0;
           const detail = cols[4].replace(/^"|"$/g, '');
           if (!key || !date) continue;
           if (!carwashData[key]) carwashData[key] = [];
           carwashData[key].push({ date, shop, amount, detail });
-          count++;
         }
         saveCarwashData();
-        showToast(`洗車${count}件インポートしました`);
-      } catch (err) { showToast('インポート失敗', true); }
-    };
-    reader.readAsText(file);
+      }
+
+      // 公休日CSV
+      const holidayFile = zip.file('mk_holidays.csv');
+      if (holidayFile) {
+        const text = (await holidayFile.async('text')).replace(/^\uFEFF/, '');
+        const lines = text.split(/\r?\n/);
+        for (let i = 1; i < lines.length; i++) {
+          const date = lines[i].trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(date)) holidays[date] = true;
+        }
+        localStorage.setItem(HOLIDAY_KEY, JSON.stringify(holidays));
+      }
+
+      renderSummary();
+      showToast('ZIPインポート完了');
+    } catch (err) {
+      showToast('インポート失敗: ' + err.message, true);
+    }
+    } else {
+      // CSVファイル(旧版互換)
+      const text = await file.text();
+      importLegacyCsv(text);
+    }
     e.target.value = '';
   });
 
-  document.getElementById('import-holidays-file').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const text = ev.target.result.replace(/^\uFEFF/, '');
-        const lines = text.split(/\r?\n/);
-        let count = 0;
-        for (let i = 1; i < lines.length; i++) {
-          const date = lines[i].trim();
-          if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
-          holidays[date] = true;
-          count++;
+  // 旧版CSV(売上のみ)インポート用 - ZIPインポートボタンとは別に将来削除予定
+  function importLegacyCsv(text) {
+    try {
+      const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
+      let count = 0;
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(','); if (cols.length < 4) continue;
+        const date = cols[0].trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+          if (cols[0].trim() === '#保有有給日数' && cols[1]) {
+            leaveDays = parseInt(cols[1]) || 0;
+            localStorage.setItem(LEAVE_DAYS_KEY, String(leaveDays));
+          } else if (cols[0].trim() === '#月間目標' && cols[1]) {
+            goal = parseInt(cols[1]) || 0;
+            localStorage.setItem(GOAL_KEY, String(goal));
+          }
+          continue;
         }
-        localStorage.setItem(HOLIDAY_KEY, JSON.stringify(holidays));
-        showToast(`公休日${count}件インポートしました`);
-      } catch (err) { showToast('インポート失敗', true); }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  });
+        const entry = { tab: parseInt(cols[1])||0, jissya: parseInt(cols[2])||0, jihara: parseInt(cols[3])||0 };
+        if (cols.length >= 9) {
+          if (cols[6]) entry.startTime = cols[6].trim();
+          if (cols[7]) entry.endTime = cols[7].trim();
+          if (cols[8]) entry.dayType = cols[8].trim();
+        }
+        allData[date] = entry; count++;
+      }
+      saveData();
+      if (goal > 0) document.getElementById('input-goal').value = goal;
+      if (leaveDays !== null) document.getElementById('input-leave-days').value = leaveDays;
+      renderSummary();
+      showToast(`売上${count}件インポートしました`);
+    } catch (err) { showToast('インポート失敗', true); }
+  }
 
   document.getElementById('reset-btn').addEventListener('click', () => {
     if (confirm('全データを削除? 元に戻せません')) {
