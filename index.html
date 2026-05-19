@@ -395,15 +395,8 @@ canvas { max-width: 100%; }
 
     <div style="font-weight: 500; margin: 16px 0 8px;">データ管理</div>
     <button id="export-btn" style="width: 100%; padding: 10px; margin-bottom: 8px;">📦 全データをエクスポート(ZIP)</button>
-    <button id="import-btn" style="width: 100%; padding: 10px; margin-bottom: 4px;">📥 ZIPからインポート</button>
+    <button id="import-btn" style="width: 100%; padding: 10px; margin-bottom: 8px;">📥 ZIPからインポート</button>
     <input type="file" id="import-file" accept=".zip,.csv" style="display: none;">
-    <div style="margin: 8px 0 4px; font-size: 11px; color: #777;">旧バージョンからの移行用(CSV個別)</div>
-    <button id="import-cleaning-btn" style="width: 100%; padding: 10px; margin-bottom: 4px;">📥 クリーニングCSVをインポート</button>
-    <button id="import-carwash-btn" style="width: 100%; padding: 10px; margin-bottom: 4px;">📥 洗車CSVをインポート</button>
-    <button id="import-holidays-btn" style="width: 100%; padding: 10px; margin-bottom: 8px;">📥 公休日CSVをインポート</button>
-    <input type="file" id="import-cleaning-file" accept=".csv" style="display: none;">
-    <input type="file" id="import-carwash-file" accept=".csv" style="display: none;">
-    <input type="file" id="import-holidays-file" accept=".csv" style="display: none;">
     <button id="reset-btn" style="width: 100%; padding: 10px; color: #A32D2D;">全データを削除</button>
 
     <div class="text-tertiary" style="margin-top: 16px; line-height: 1.6;">
@@ -1996,80 +1989,6 @@ canvas { max-width: 100%; }
 
   document.getElementById('import-btn').addEventListener('click', () => {
     document.getElementById('import-file').click();
-  });
-
-  // 旧バージョン移行用: CSV個別インポート
-  document.getElementById('import-cleaning-btn').addEventListener('click', () => {
-    document.getElementById('import-cleaning-file').click();
-  });
-  document.getElementById('import-carwash-btn').addEventListener('click', () => {
-    document.getElementById('import-carwash-file').click();
-  });
-  document.getElementById('import-holidays-btn').addEventListener('click', () => {
-    document.getElementById('import-holidays-file').click();
-  });
-
-  document.getElementById('import-cleaning-file').addEventListener('change', (e) => {
-    const file = e.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const text = ev.target.result.replace(/^\uFEFF/, '');
-        const lines = text.split(/\r?\n/); let count = 0;
-        for (let i = 1; i < lines.length; i++) {
-          const cols = lines[i].split(','); if (cols.length < 4) continue;
-          const key = cols[0].trim(); const date = cols[1].trim();
-          const amount = parseInt(cols[2]) || 0;
-          const detail = cols[3].replace(/^"|"$/g, '');
-          if (!key || !date) continue;
-          if (!cleaningData[key]) cleaningData[key] = [];
-          cleaningData[key].push({ date, amount, detail }); count++;
-        }
-        saveCleaningData(); showToast(`クリーニング${count}件インポートしました`);
-      } catch (err) { showToast('インポート失敗', true); }
-    };
-    reader.readAsText(file); e.target.value = '';
-  });
-
-  document.getElementById('import-carwash-file').addEventListener('change', (e) => {
-    const file = e.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const text = ev.target.result.replace(/^\uFEFF/, '');
-        const lines = text.split(/\r?\n/); let count = 0;
-        for (let i = 1; i < lines.length; i++) {
-          const cols = lines[i].split(','); if (cols.length < 5) continue;
-          const key = cols[0].trim(); const date = cols[1].trim();
-          const shop = cols[2].trim(); const amount = parseInt(cols[3]) || 0;
-          const detail = cols[4].replace(/^"|"$/g, '');
-          if (!key || !date) continue;
-          if (!carwashData[key]) carwashData[key] = [];
-          carwashData[key].push({ date, shop, amount, detail }); count++;
-        }
-        saveCarwashData(); showToast(`洗車${count}件インポートしました`);
-      } catch (err) { showToast('インポート失敗', true); }
-    };
-    reader.readAsText(file); e.target.value = '';
-  });
-
-  document.getElementById('import-holidays-file').addEventListener('change', (e) => {
-    const file = e.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const text = ev.target.result.replace(/^\uFEFF/, '');
-        const lines = text.split(/\r?\n/); let count = 0;
-        for (let i = 1; i < lines.length; i++) {
-          const date = lines[i].trim();
-          if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
-          holidays[date] = true; count++;
-        }
-        localStorage.setItem(HOLIDAY_KEY, JSON.stringify(holidays));
-        showToast(`公休日${count}件インポートしました`);
-      } catch (err) { showToast('インポート失敗', true); }
-    };
-    reader.readAsText(file); e.target.value = '';
   });
 
   document.getElementById('import-file').addEventListener('change', async (e) => {
