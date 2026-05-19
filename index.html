@@ -128,6 +128,8 @@ button:active { transform: scale(0.98); }
 .cal-cell.has-data { background: rgba(199,165,69,0.08); }
 .cal-cell.holiday { background: rgba(100,160,220,0.15); }
 .cal-cell.holiday.has-data { background: rgba(100,160,220,0.12); }
+.cal-cell.is-leave { background: rgba(29,158,117,0.15); }
+.cal-cell.is-absence { background: rgba(224,92,92,0.15); }
 .cal-holiday { font-size: 9px; color: #7ab3e0; font-weight: 500; }
 .cal-day { font-size: 12px; font-weight: 500; line-height: 1.2; }
 .cal-amount { font-size: 9px; color: #C7A545; line-height: 1.2; font-weight: 500; }
@@ -166,14 +168,14 @@ canvas { max-width: 100%; }
 
       <!-- 実車高速 アコーディオン -->
       <div style="margin-bottom: 8px;">
-        <div id="jissya-toggle" class="row" style="cursor:pointer; padding: 6px 0;">
+        <div id="jissya-toggle" class="row" style="cursor:pointer; padding: 6px 0; background:#2a2a2a; border-radius:8px; padding:8px 10px;">
           <span class="label" style="margin:0;">実車高速</span>
           <div style="display:flex;align-items:center;gap:8px;">
-            <span id="jissya-total-preview" style="font-size:12px;font-weight:500;color:#e8e8e8;">¥0</span>
+            <span id="jissya-total-preview" style="font-size:12px;font-weight:500;color:#777;">タップして追加 ＋</span>
             <span id="jissya-arrow" style="font-size:11px;color:#aaa;">▶</span>
           </div>
         </div>
-        <div id="jissya-form" style="display:none;">
+        <div id="jissya-form" style="display:none; margin-top:6px;">
           <div style="display:flex;gap:6px;margin-bottom:4px;">
             <input type="number" id="jissya-input" placeholder="金額を入力" inputmode="numeric" pattern="[0-9]*" style="flex:1;min-width:0;">
             <button id="jissya-add-btn" style="padding:0 10px;font-size:12px;white-space:nowrap;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;">追加</button>
@@ -185,14 +187,14 @@ canvas { max-width: 100%; }
 
       <!-- 空車高速 アコーディオン -->
       <div style="margin-bottom: 8px;">
-        <div id="jihara-toggle" class="row" style="cursor:pointer; padding: 6px 0;">
+        <div id="jihara-toggle" class="row" style="cursor:pointer; background:#2a2a2a; border-radius:8px; padding:8px 10px;">
           <span class="label" style="margin:0;">空車高速(自腹)</span>
           <div style="display:flex;align-items:center;gap:8px;">
-            <span id="jihara-total-preview" style="font-size:12px;font-weight:500;color:#e8e8e8;">¥0</span>
+            <span id="jihara-total-preview" style="font-size:12px;font-weight:500;color:#777;">タップして追加 ＋</span>
             <span id="jihara-arrow" style="font-size:11px;color:#aaa;">▶</span>
           </div>
         </div>
-        <div id="jihara-form" style="display:none;">
+        <div id="jihara-form" style="display:none; margin-top:6px;">
           <div style="display:flex;gap:6px;margin-bottom:4px;">
             <input type="number" id="jihara-input" placeholder="金額を入力" inputmode="numeric" pattern="[0-9]*" style="flex:1;min-width:0;">
             <button id="jihara-add-btn" style="padding:0 10px;font-size:12px;white-space:nowrap;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;">追加</button>
@@ -1064,9 +1066,10 @@ canvas { max-width: 100%; }
 
       let cellClass = 'cal-cell';
       if (isHoliday) cellClass += ' holiday';
-      if (isToday) cellClass += ' today';
+      if (data && data.dayType === 'leave') cellClass += ' is-leave';
+      else if (data && data.dayType === 'absence') cellClass += ' is-absence';
+      else if (isToday) cellClass += ' today';
       else if (data && !isHoliday) cellClass += ' has-data';
-      else if (data && isHoliday) cellClass += ' has-data';
 
       let dayColor = '#e8e8e8';
       if (dow === 0) dayColor = '#E05C5C';
@@ -1828,7 +1831,14 @@ canvas { max-width: 100%; }
       });
     });
     const total = items.reduce((s, v) => s + v, 0);
-    document.getElementById(totalId).textContent = '¥' + total.toLocaleString();
+    const previewEl = document.getElementById(totalId);
+    if (total > 0) {
+      previewEl.textContent = '¥' + total.toLocaleString();
+      previewEl.style.color = '#e8e8e8';
+    } else {
+      previewEl.textContent = 'タップして追加 ＋';
+      previewEl.style.color = '#777';
+    }
     document.getElementById(hiddenId).value = total;
   }
 
