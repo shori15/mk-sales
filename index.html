@@ -141,7 +141,7 @@ canvas { max-width: 100%; }
 <body>
 <div class="container">
 
-<div class="tabs" style="position: sticky; top: 0; z-index: 20; background: #1a1a1a; margin-bottom: 0; padding-bottom: 0;">
+<div class="tabs" style="position: sticky; top: 0; z-index: 20; background: #1a1a1a; margin-bottom: 12px; padding-bottom: 0;">
   <button id="tab-summary" class="tab tab-active">サマリー</button>
   <button id="tab-list" class="tab">日別</button>
   <button id="tab-expense" class="tab">経費</button>
@@ -294,7 +294,7 @@ canvas { max-width: 100%; }
         <span id="daily-required" class="med-number">¥0</span>
       </div>
       <div class="row" style="margin-top: 4px;">
-        <span class="text-secondary">予想着地(現ペース×22日)</span>
+        <span class="text-secondary">予想着地(現ペース×実稼働日)</span>
         <span id="projected-total" class="med-number" style="color: #C7A545;">¥0</span>
       </div>
     </div>
@@ -346,7 +346,7 @@ canvas { max-width: 100%; }
 <div id="view-list" class="hidden">
 
   <!-- カレンダー(スクロールしても上に固定) -->
-  <div class="card" style="margin-bottom: 12px; padding: 10px; position: sticky; top: 38px; z-index: 10; background: #262626;">
+  <div class="card" style="margin-bottom: 12px; padding: 10px; position: sticky; top: 50px; z-index: 10; background: #262626;">
     <div class="row" style="margin-bottom: 8px;">
       <div style="display:flex;align-items:center;gap:6px;">
         <button id="cal-prev" class="icon-btn">←</button>
@@ -958,7 +958,8 @@ canvas { max-width: 100%; }
       if (workDays > 0) {
         paceEl.style.display = 'block';
         const avgDaily = totalPureAfterTax / workDays;
-        const projected = Math.round(avgDaily * MONTHLY_WORK_DAYS);
+        const actualWorkDays = MONTHLY_WORK_DAYS - leaveCount - absenceDays;
+        const projected = Math.round(avgDaily * actualWorkDays);
         document.getElementById('projected-total').textContent = fmtYen(projected);
         if (remaining > 0 && remainingDays > 0) {
           const dailyRequired = Math.ceil(remaining / remainingDays);
