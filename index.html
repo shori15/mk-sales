@@ -2135,10 +2135,28 @@ canvas { max-width: 100%; }
 
   document.getElementById('reset-btn').addEventListener('click', () => {
     if (confirm('全データを削除? 元に戻せません')) {
+      // 売上データ
       allData = {};
       localStorage.removeItem(STORAGE_KEY);
+      // クリーニング
+      cleaningData = {};
+      localStorage.removeItem(CLEANING_KEY);
+      // 洗車
+      carwashData = {};
+      localStorage.removeItem(CARWASH_KEY);
+      // 公休日
+      holidays = {};
+      localStorage.removeItem(HOLIDAY_KEY);
+      // 目標
+      goal = 0;
+      localStorage.removeItem(GOAL_KEY);
+      document.getElementById('input-goal').value = '';
+      // 有給日数
+      leaveDays = null;
+      localStorage.removeItem(LEAVE_DAYS_KEY);
+      document.getElementById('input-leave-days').value = '';
       renderSummary();
-      showToast('削除しました');
+      showToast('全データを削除しました');
     }
   });
 
