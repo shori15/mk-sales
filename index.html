@@ -131,7 +131,7 @@ button:active { transform: scale(0.98); }
 .cal-holiday { font-size: 9px; color: #7ab3e0; font-weight: 500; }
 .cal-day { font-size: 12px; font-weight: 500; line-height: 1.2; }
 .cal-amount { font-size: 9px; color: #C7A545; line-height: 1.2; font-weight: 500; }
-.cal-leave { font-size: 9px; color: #C7A545; font-weight: 500; }
+.cal-leave { font-size: 9px; color: #1D9E75; font-weight: 500; }
 .cal-absence { font-size: 9px; color: #E05C5C; font-weight: 500; }
 .cal-empty { color: #555; }
 canvas { max-width: 100%; }
@@ -2090,18 +2090,20 @@ canvas { max-width: 100%; }
         let count = 0;
         for (let i = 1; i < lines.length; i++) {
           const cols = lines[i].split(',');
-          if (cols.length < 4) continue;
+          if (cols.length < 2) continue;
           const date = cols[0].trim();
-          if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-            if (cols[0].trim() === '#保有有給日数' && cols[1]) {
-              leaveDays = parseInt(cols[1]) || 0;
-              localStorage.setItem(LEAVE_DAYS_KEY, String(leaveDays));
-            } else if (cols[0].trim() === '#月間目標' && cols[1]) {
-              goal = parseInt(cols[1]) || 0;
-              localStorage.setItem(GOAL_KEY, String(goal));
-            }
+          // 設定値行(#で始まる)を先に処理
+          if (cols[0].trim() === '#保有有給日数' && cols[1]) {
+            leaveDays = parseInt(cols[1]) || 0;
+            localStorage.setItem(LEAVE_DAYS_KEY, String(leaveDays));
+            continue;
+          } else if (cols[0].trim() === '#月間目標' && cols[1]) {
+            goal = parseInt(cols[1]) || 0;
+            localStorage.setItem(GOAL_KEY, String(goal));
             continue;
           }
+          if (cols.length < 4) continue;
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
           const entry = { tab: parseInt(cols[1])||0, jissya: parseInt(cols[2])||0, jihara: parseInt(cols[3])||0 };
           if (cols.length >= 9) {
             if (cols[6]) entry.startTime = cols[6].trim();
@@ -2183,18 +2185,19 @@ canvas { max-width: 100%; }
       const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
       let count = 0;
       for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(','); if (cols.length < 4) continue;
+        const cols = lines[i].split(','); if (cols.length < 2) continue;
         const date = cols[0].trim();
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-          if (cols[0].trim() === '#保有有給日数' && cols[1]) {
-            leaveDays = parseInt(cols[1]) || 0;
-            localStorage.setItem(LEAVE_DAYS_KEY, String(leaveDays));
-          } else if (cols[0].trim() === '#月間目標' && cols[1]) {
-            goal = parseInt(cols[1]) || 0;
-            localStorage.setItem(GOAL_KEY, String(goal));
-          }
+        if (cols[0].trim() === '#保有有給日数' && cols[1]) {
+          leaveDays = parseInt(cols[1]) || 0;
+          localStorage.setItem(LEAVE_DAYS_KEY, String(leaveDays));
+          continue;
+        } else if (cols[0].trim() === '#月間目標' && cols[1]) {
+          goal = parseInt(cols[1]) || 0;
+          localStorage.setItem(GOAL_KEY, String(goal));
           continue;
         }
+        if (cols.length < 4) continue;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
         const entry = { tab: parseInt(cols[1])||0, jissya: parseInt(cols[2])||0, jihara: parseInt(cols[3])||0 };
         if (cols.length >= 9) {
           if (cols[6]) entry.startTime = cols[6].trim();
