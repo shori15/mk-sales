@@ -1445,7 +1445,7 @@ canvas { max-width: 100%; }
     const btns = document.getElementById('carwash-buttons');
     btns.innerHTML = CARWASH_SHOPS.map(shop => {
       const price = carwashPrices[shop] || 0;
-      const isMenuShop = (shop === '新橋' || shop === 'タムラ');
+      const isMenuShop = (shop === '新橋' || shop === 'タムラ' || shop === 'PCW');
       const priceText = isMenuShop ? 'メニューで選択' : (price > 0 ? fmtYen(price) : '未設定');
       const disabled = (!isMenuShop && price === 0) ? 'style="opacity:0.4;"' : '';
       return `<button class="carwash-shop-btn" data-shop="${shop}" data-price="${price}"
