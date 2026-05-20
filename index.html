@@ -1149,7 +1149,7 @@ canvas { max-width: 100%; }
         mins += 60;
         const h = Math.floor(mins / 60);
         const m = mins % 60;
-        const hourlyRate = Math.round(pure / (mins / 60));
+        const hourlyRate = Math.round(pureAfterTax / (mins / 60));
         hoursText = `${e.startTime}〜${e.endTime} / 勤務${h}h${m > 0 ? m + 'm' : ''} / 時給 ${fmtYen(hourlyRate)}`;
       }
       return `<div class="entry-row">
