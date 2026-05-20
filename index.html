@@ -898,9 +898,7 @@ canvas { max-width: 100%; }
         if (mins > 480) totalOvertimeMin += (mins - 480);
       }
     });
-    const totalPure = totalTab - totalJissya;
-    const totalTax = Math.floor(totalTab / 1.1 * 0.1); // 消費税(逆算・切り捨て)
-    const totalPureAfterTax = totalPure - totalTax; // 純売上(高速+消費税抜き)
+    const totalPureAfterTax = Math.floor((totalTab - totalJissya - totalJihara) / 1.1); // 純売上=(売上-全高速)÷1.1
 
     // クリーニング累計
     const cleaningKey = getPeriodKey(viewOffset);
@@ -911,7 +909,7 @@ canvas { max-width: 100%; }
     const carwashRecords = carwashData[cleaningKey] || [];
     const totalCarwash = carwashRecords.reduce((sum, r) => sum + r.amount, 0);
 
-    const netAmount = totalPureAfterTax - totalJihara - totalCleaning - totalCarwash;
+    const netAmount = totalPureAfterTax - totalCleaning - totalCarwash;
 
     document.getElementById('total-tab').textContent = fmtYen(totalTab);
     document.getElementById('total-pure').textContent = fmtYen(totalPureAfterTax);
@@ -991,9 +989,7 @@ canvas { max-width: 100%; }
       return `${d.getMonth()+1}/${d.getDate()}`;
     });
     const data = workEntries.map(e => {
-      const pure = (e.tab || 0) - (e.jissya || 0);
-      const tax = Math.floor((e.tab || 0) / 1.1 * 0.1);
-      return pure - tax;
+      return Math.floor(((e.tab || 0) - (e.jissya || 0) - (e.jihara || 0)) / 1.1);
     });
 
     const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -1025,9 +1021,7 @@ canvas { max-width: 100%; }
     const dataMap = {};
     let calTotal = 0;
     entries.forEach(e => {
-      const pure = (e.tab||0) - (e.jissya||0);
-      const tax = Math.floor((e.tab||0) / 1.1 * 0.1);
-      const pureAfterTax = pure - tax;
+      const pureAfterTax = Math.floor(((e.tab||0) - (e.jissya||0) - (e.jihara||0)) / 1.1);
       dataMap[e.date] = { amount: pureAfterTax, dayType: e.dayType || '' };
       if (!e.dayType) calTotal += pureAfterTax;
     });
@@ -1143,11 +1137,9 @@ canvas { max-width: 100%; }
         </div>`;
       }
       
-      const pure = (e.tab||0) - (e.jissya||0);
-      const tax = Math.floor((e.tab||0) / 1.1 * 0.1);
-      const pureAfterTax = pure - tax;
       const jissya = e.jissya || 0;
       const jihara = e.jihara || 0;
+      const pureAfterTax = Math.floor(((e.tab||0) - jissya - jihara) / 1.1);
       let hoursText = '';
       if (e.startTime && e.endTime) {
         const [sh, sm] = e.startTime.split(':').map(Number);
