@@ -203,6 +203,33 @@ canvas { max-width: 100%; }
         </div>
         <input type="hidden" id="quick-jihara" value="0">
       </div>
+
+      <!-- 燃料費 アコーディオン -->
+      <div style="margin-bottom: 8px;">
+        <div id="fuel-toggle" class="row" style="cursor:pointer; background:#2a2a2a; border-radius:8px; padding:8px 10px;">
+          <span class="label" style="margin:0;">燃料費</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span id="fuel-total-preview" style="font-size:12px;font-weight:500;color:#777;">タップして入力 ＋</span>
+            <span id="fuel-arrow" style="font-size:11px;color:#aaa;">▶</span>
+          </div>
+        </div>
+        <div id="fuel-form" style="display:none; margin-top:6px;">
+          <div style="display:flex; gap:6px; margin-bottom:6px;">
+            <label style="flex:1; display:flex; align-items:center; gap:5px; background:#2a2a2a; border:0.5px solid #3a3a3a; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:11px;">
+              <input type="radio" name="fuel-type" value="gasoline" checked> <span>ガソリン車</span><span style="color:#777;font-size:9px;margin-left:auto;">¥20/km</span>
+            </label>
+            <label style="flex:1; display:flex; align-items:center; gap:5px; background:#2a2a2a; border:0.5px solid #3a3a3a; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:11px;">
+              <input type="radio" name="fuel-type" value="ev"> <span>電気自動車</span><span style="color:#777;font-size:9px;margin-left:auto;">¥15/km</span>
+            </label>
+          </div>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <input type="number" id="fuel-distance" placeholder="走行距離(km)" inputmode="numeric" style="flex:1;min-width:0;">
+            <span id="fuel-calc" style="font-size:13px; font-weight:500; color:#C7A545; min-width:70px; text-align:right;">¥0</span>
+          </div>
+        </div>
+        <input type="hidden" id="quick-fuel-distance" value="0">
+        <input type="hidden" id="quick-fuel-type" value="gasoline">
+      </div>
       <div class="grid-2" style="margin-bottom: 6px;">
         <div>
           <label class="label">出勤時刻</label>
@@ -269,6 +296,10 @@ canvas { max-width: 100%; }
     <div class="row" style="margin-bottom: 6px;">
       <span class="text-secondary">洗車代</span>
       <span id="carwash-summary" class="med-number text-danger">-¥0</span>
+    </div>
+    <div class="row" style="margin-bottom: 6px;">
+      <span class="text-secondary">燃料費</span>
+      <span id="fuel-summary" class="med-number text-danger">-¥0</span>
     </div>
     <div class="divider" style="margin: 8px 0;"></div>
     <div class="row">
@@ -787,36 +818,11 @@ canvas { max-width: 100%; }
   <!-- ガソリン -->
   <div class="card" style="margin-bottom: 12px; margin-top: 4px;">
     <div id="gas-toggle" class="row" style="cursor: pointer;">
-      <p style="font-size: 13px; font-weight: 500; margin: 0;">燃料費</p>
+      <p style="font-size: 13px; font-weight: 500; margin: 0;">燃料費(履歴)</p>
       <span id="gas-arrow" style="font-size: 13px; color: #aaa;">▶</span>
     </div>
     <div id="gas-form" style="display: none; margin-top: 12px;">
-      <div class="row" style="margin-bottom: 10px;">
-        <span style="font-size: 12px; color: #aaa;">日付</span>
-        <input type="date" id="gas-date" style="font-size: 12px; padding: 4px 8px; background: #2a2a2a; border: 0.5px solid #3a3a3a; border-radius: 6px; color: #e8e8e8;">
-      </div>
-      <!-- 車種選択 -->
-      <div style="margin-bottom: 10px;">
-        <label class="label">車種</label>
-        <div style="display: flex; gap: 8px;">
-          <label style="flex:1; display:flex; align-items:center; gap:6px; background:#2a2a2a; border:0.5px solid #3a3a3a; border-radius:8px; padding:8px 10px; cursor:pointer;">
-            <input type="radio" name="gas-type" value="gasoline" checked> <span style="font-size:13px;">ガソリン車</span><span style="font-size:10px;color:#777;margin-left:auto;">×¥20/km</span>
-          </label>
-          <label style="flex:1; display:flex; align-items:center; gap:6px; background:#2a2a2a; border:0.5px solid #3a3a3a; border-radius:8px; padding:8px 10px; cursor:pointer;">
-            <input type="radio" name="gas-type" value="ev"> <span style="font-size:13px;">電気自動車</span><span style="font-size:10px;color:#777;margin-left:auto;">×¥15/km</span>
-          </label>
-        </div>
-      </div>
-      <!-- 走行距離 -->
-      <div style="margin-bottom: 8px;">
-        <label class="label">走行距離(km)</label>
-        <input type="number" id="gas-distance" placeholder="例: 250" inputmode="numeric" style="width: 100%;">
-      </div>
-      <div class="row" style="margin-bottom: 10px; background: #2a2a2a; border-radius: 8px; padding: 8px 10px;">
-        <span style="font-size: 12px; color: #aaa;">燃料費(自動計算)</span>
-        <span id="gas-subtotal" style="font-size: 15px; font-weight: 500; color: #C7A545;">¥0</span>
-      </div>
-      <button id="gas-add-btn" class="btn-primary" style="width: 100%; padding: 10px;">この内容を追加</button>
+      <p style="font-size: 11px; color: #777; text-align: center; padding: 10px 0;">燃料費はサマリーの「日々の入力」から記録できます</p>
     </div>
   </div>
 
@@ -961,7 +967,16 @@ canvas { max-width: 100%; }
     const carwashRecords = carwashData[cleaningKey] || [];
     const totalCarwash = carwashRecords.reduce((sum, r) => sum + r.amount, 0);
 
-    const netAmount = totalPureAfterTax - totalCleaning - totalCarwash;
+    // 燃料費累計(売上データから集計)
+    let totalFuel = 0;
+    entries.forEach(e => {
+      if (e.fuelDistance > 0) {
+        const rate = e.fuelType === 'ev' ? 15 : 20;
+        totalFuel += Math.round(e.fuelDistance * rate);
+      }
+    });
+
+    const netAmount = totalPureAfterTax - totalCleaning - totalCarwash - totalFuel;
 
     document.getElementById('total-tab').textContent = fmtYen(totalTab);
     document.getElementById('total-pure').textContent = fmtYen(totalPureAfterTax);
@@ -969,6 +984,7 @@ canvas { max-width: 100%; }
     document.getElementById('jihara-total').textContent = '-' + fmtYen(totalJihara);
     document.getElementById('cleaning-summary').textContent = '-' + fmtYen(totalCleaning);
     document.getElementById('carwash-summary').textContent = '-' + fmtYen(totalCarwash);
+    document.getElementById('fuel-summary').textContent = '-' + fmtYen(totalFuel);
     document.getElementById('net-amount').textContent = fmtYen(netAmount);
     document.getElementById('work-days').textContent = workDays + '日';
     document.getElementById('remaining-work-days').textContent = Math.max(0, 22 - workDays - leaveCount - absenceDays) + '日';
@@ -1244,6 +1260,16 @@ canvas { max-width: 100%; }
     document.getElementById('jissya-arrow').textContent = '▶';
     document.getElementById('jihara-form').style.display = 'none';
     document.getElementById('jihara-arrow').textContent = '▶';
+    // 燃料費リセット
+    document.getElementById('fuel-distance').value = '';
+    document.getElementById('quick-fuel-distance').value = '0';
+    document.getElementById('quick-fuel-type').value = 'gasoline';
+    document.querySelector('input[name="fuel-type"][value="gasoline"]').checked = true;
+    document.getElementById('fuel-calc').textContent = '¥0';
+    document.getElementById('fuel-total-preview').textContent = 'タップして入力 ＋';
+    document.getElementById('fuel-total-preview').style.color = '#777';
+    document.getElementById('fuel-form').style.display = 'none';
+    document.getElementById('fuel-arrow').textContent = '▶';
     document.getElementById('quick-start').value = '';
     document.getElementById('quick-end').value = '';
     document.getElementById('work-hours-preview').textContent = '';
@@ -1256,13 +1282,26 @@ canvas { max-width: 100%; }
       document.getElementById('quick-tab').value = existing.tab || '';
       document.getElementById('quick-start').value = existing.startTime || '';
       document.getElementById('quick-end').value = existing.endTime || '';
-      // 高速料金リストを展開(配列で保存されていれば展開、数値なら単一要素に)
       jissyaItems = Array.isArray(existing.jissyaItems) ? [...existing.jissyaItems]
         : (existing.jissya > 0 ? [existing.jissya] : []);
       jiharaItems = Array.isArray(existing.jiharaItems) ? [...existing.jiharaItems]
         : (existing.jihara > 0 ? [existing.jihara] : []);
       renderHighwayList(jissyaItems, 'jissya-list', 'jissya-total-preview', 'quick-jissya');
       renderHighwayList(jiharaItems, 'jihara-list', 'jihara-total-preview', 'quick-jihara');
+      // 燃料費の復元
+      if (existing.fuelDistance > 0) {
+        document.getElementById('fuel-distance').value = existing.fuelDistance;
+        const ft = existing.fuelType || 'gasoline';
+        document.querySelector(`input[name="fuel-type"][value="${ft}"]`).checked = true;
+        updateFuelCalc();
+      } else {
+        document.getElementById('fuel-distance').value = '';
+        document.querySelector('input[name="fuel-type"][value="gasoline"]').checked = true;
+        document.getElementById('fuel-calc').textContent = '¥0';
+        document.getElementById('fuel-total-preview').textContent = 'タップして入力 ＋';
+        document.getElementById('fuel-total-preview').style.color = '#777';
+        document.getElementById('quick-fuel-distance').value = '0';
+      }
       updateWorkHoursPreview();
     } else {
       clearInputs();
@@ -1787,72 +1826,37 @@ canvas { max-width: 100%; }
   }  // renderCarwashHistory終了
 
   function renderGasHistory() {
-    // ガソリン
-    const gasKey = getPeriodKey(expOffset);
-    const gasRecords = gasData[gasKey] || [];
+    // 売上データ(allData)から燃料費を集計
+    const { start, end } = getPeriod(expOffset);
+    const gasRecords = [];
+    Object.entries(allData).forEach(([date, e]) => {
+      if (!e.fuelDistance || e.fuelDistance <= 0) return;
+      const d = new Date(date);
+      if (d < start || d > end) return;
+      const rate = e.fuelType === 'ev' ? 15 : 20;
+      const amount = Math.round(e.fuelDistance * rate);
+      gasRecords.push({ date, type: e.fuelType || 'gasoline', distance: e.fuelDistance, rate, amount });
+    });
+    gasRecords.sort((a,b) => a.date.localeCompare(b.date));
     const gasTotal = gasRecords.reduce((s, r) => s + r.amount, 0);
     document.getElementById('gas-total').textContent = fmtYen(gasTotal);
 
     const gasContainer = document.getElementById('gas-history-container');
     if (gasRecords.length === 0) {
-      gasContainer.innerHTML = '<p style="text-align:center;color:#888;font-size:13px;padding:0.5rem 0 1rem;">この期間のガソリン記録はまだありません</p>';
+      gasContainer.innerHTML = '<p style="text-align:center;color:#888;font-size:13px;padding:0.5rem 0 1rem;">この期間の燃料費記録はまだありません</p>';
     } else {
       gasContainer.innerHTML = '<p style="font-size:12px;color:#aaa;margin-bottom:8px;">記録履歴</p>' +
-        gasRecords.map((r, idx) => `
+        gasRecords.map(r => `
           <div class="entry-row" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;">
             <div>
               <span style="font-size:13px;">${r.date}</span>
               <span style="font-size:11px;color:#777;margin-left:6px;">${r.distance}km / ${r.type === 'ev' ? '電気自動車' : 'ガソリン車'}</span>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <span style="font-size:15px;font-weight:500;color:#C7A545;">${fmtYen(r.amount)}</span>
-              <button class="gas-del" data-key="${gasKey}" data-idx="${idx}" style="background:transparent;border:none;color:#A32D2D;font-size:12px;padding:2px 6px;">削除</button>
-            </div>
+            <span style="font-size:15px;font-weight:500;color:#C7A545;">${fmtYen(r.amount)}</span>
           </div>
         `).join('');
-      gasContainer.querySelectorAll('.gas-del').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const k = btn.getAttribute('data-key');
-          const idx = parseInt(btn.getAttribute('data-idx'));
-          if (confirm('この記録を削除?')) {
-            gasData[k].splice(idx, 1);
-            saveGasData();
-            renderExpense();
-          }
-        });
-      });
     }
-  }  // renderGasHistory終了
-
-  // 燃料費: 走行距離×レートで自動計算
-  function updateGasSubtotal() {
-    const distance = parseFloat(document.getElementById('gas-distance').value) || 0;
-    const type = document.querySelector('input[name="gas-type"]:checked')?.value || 'gasoline';
-    const rate = type === 'ev' ? 15 : 20;
-    const total = Math.round(distance * rate);
-    document.getElementById('gas-subtotal').textContent = total > 0 ? fmtYen(total) : '¥0';
   }
-  document.getElementById('gas-distance').addEventListener('input', updateGasSubtotal);
-  document.querySelectorAll('input[name="gas-type"]').forEach(r => r.addEventListener('change', updateGasSubtotal));
-
-  document.getElementById('gas-add-btn').addEventListener('click', () => {
-    const distance = parseFloat(document.getElementById('gas-distance').value) || 0;
-    const type = document.querySelector('input[name="gas-type"]:checked')?.value || 'gasoline';
-    const rate = type === 'ev' ? 15 : 20;
-    const amount = Math.round(distance * rate);
-    if (amount === 0) { showToast('走行距離を入力してください', true); return; }
-    const key = getPeriodKey(expOffset);
-    const date = document.getElementById('gas-date').value || fmtDate(new Date());
-    if (!gasData[key]) gasData[key] = [];
-    gasData[key].push({ date, type, distance, rate, amount });
-    saveGasData();
-    document.getElementById('gas-distance').value = '';
-    document.getElementById('gas-subtotal').textContent = '¥0';
-    document.getElementById('gas-form').style.display = 'none';
-    document.getElementById('gas-arrow').textContent = '▶';
-    showToast(`¥${amount.toLocaleString()} を追加しました`);
-    renderExpense();
-  });
 
   document.getElementById('gas-toggle').addEventListener('click', () => {
     const form = document.getElementById('gas-form');
@@ -1860,7 +1864,6 @@ canvas { max-width: 100%; }
     const isOpen = form.style.display !== 'none';
     form.style.display = isOpen ? 'none' : 'block';
     arrow.textContent = isOpen ? '▶' : '▼';
-    if (!isOpen) document.getElementById('gas-date').value = fmtDate(new Date());
   });
 
   document.getElementById('gas-hist-toggle').addEventListener('click', () => {
@@ -1870,8 +1873,6 @@ canvas { max-width: 100%; }
     container.style.display = isOpen ? 'none' : 'block';
     arrow.textContent = isOpen ? '▶' : '▼';
   });
-
-  loadGasData();
 
   document.getElementById('carwash-toggle').addEventListener('click', () => {
     const form = document.getElementById('carwash-form');
@@ -1948,6 +1949,37 @@ canvas { max-width: 100%; }
     form.style.display = isOpen ? 'none' : 'block';
     arrow.textContent = isOpen ? '▶' : '▼';
   });
+  // 燃料費アコーディオントグル
+  document.getElementById('fuel-toggle').addEventListener('click', () => {
+    const form = document.getElementById('fuel-form');
+    const arrow = document.getElementById('fuel-arrow');
+    const isOpen = form.style.display !== 'none';
+    form.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent = isOpen ? '▶' : '▼';
+  });
+
+  // 燃料費の自動計算
+  function updateFuelCalc() {
+    const distance = parseFloat(document.getElementById('fuel-distance').value) || 0;
+    const type = document.querySelector('input[name="fuel-type"]:checked')?.value || 'gasoline';
+    const rate = type === 'ev' ? 15 : 20;
+    const total = Math.round(distance * rate);
+    document.getElementById('fuel-calc').textContent = fmtYen(total);
+    document.getElementById('quick-fuel-distance').value = distance;
+    document.getElementById('quick-fuel-type').value = type;
+    // プレビュー(閉じてる時に見える)も更新
+    const previewEl = document.getElementById('fuel-total-preview');
+    if (total > 0) {
+      previewEl.textContent = fmtYen(total);
+      previewEl.style.color = '#e8e8e8';
+    } else {
+      previewEl.textContent = 'タップして入力 ＋';
+      previewEl.style.color = '#777';
+    }
+  }
+  document.getElementById('fuel-distance').addEventListener('input', updateFuelCalc);
+  document.querySelectorAll('input[name="fuel-type"]').forEach(r => r.addEventListener('change', updateFuelCalc));
+
   document.getElementById('jihara-toggle').addEventListener('click', () => {
     const form = document.getElementById('jihara-form');
     const arrow = document.getElementById('jihara-arrow');
@@ -2065,8 +2097,15 @@ canvas { max-width: 100%; }
     const jihara = parseInt(document.getElementById('quick-jihara').value) || 0;
     const startTime = document.getElementById('quick-start').value;
     const endTime = document.getElementById('quick-end').value;
-    if (tab === 0 && jissya === 0 && jihara === 0 && !startTime && !endTime) { alert('金額か出退勤時刻を入れてください'); return; }
-    allData[date] = { tab, jissya, jihara, jissyaItems: [...jissyaItems], jiharaItems: [...jiharaItems], startTime, endTime };
+    const fuelDistance = parseFloat(document.getElementById('quick-fuel-distance').value) || 0;
+    const fuelType = document.getElementById('quick-fuel-type').value || 'gasoline';
+    if (tab === 0 && jissya === 0 && jihara === 0 && !startTime && !endTime && fuelDistance === 0) { alert('金額か出退勤時刻を入れてください'); return; }
+    const entry = { tab, jissya, jihara, jissyaItems: [...jissyaItems], jiharaItems: [...jiharaItems], startTime, endTime };
+    if (fuelDistance > 0) {
+      entry.fuelDistance = fuelDistance;
+      entry.fuelType = fuelType;
+    }
+    allData[date] = entry;
     saveData();
 
     clearInputs();
@@ -2103,11 +2142,11 @@ canvas { max-width: 100%; }
     const bom = '\uFEFF';
 
     const sorted = Object.entries(allData).sort((a,b) => a[0].localeCompare(b[0]));
-    let csv1 = '日付,売上,実車高速,空車高速(自腹),純売上,実質手取り,出勤時刻,退勤時刻,区分\n';
+    let csv1 = '日付,売上,実車高速,空車高速(自腹),純売上,実質手取り,出勤時刻,退勤時刻,区分,走行距離,車種\n';
     sorted.forEach(([date, e]) => {
       const tab = e.tab||0, jissya = e.jissya||0, jihara = e.jihara||0;
       const pure = tab - jissya;
-      csv1 += `${date},${tab},${jissya},${jihara},${pure},${pure-jihara},${e.startTime||''},${e.endTime||''},${e.dayType||''}\n`;
+      csv1 += `${date},${tab},${jissya},${jihara},${pure},${pure-jihara},${e.startTime||''},${e.endTime||''},${e.dayType||''},${e.fuelDistance||0},${e.fuelType||''}\n`;
     });
     if (leaveDays !== null) csv1 += `#保有有給日数,${leaveDays}\n`;
     if (goal > 0) csv1 += `#月間目標,${goal}\n`;
@@ -2188,6 +2227,10 @@ canvas { max-width: 100%; }
             if (cols[6]) entry.startTime = cols[6].trim();
             if (cols[7]) entry.endTime = cols[7].trim();
             if (cols[8]) entry.dayType = cols[8].trim();
+          }
+          if (cols.length >= 11) {
+            const fd = parseFloat(cols[9]); if (fd > 0) entry.fuelDistance = fd;
+            if (cols[10] && cols[10].trim()) entry.fuelType = cols[10].trim();
           }
           allData[date] = entry;
           count++;
@@ -2302,6 +2345,10 @@ canvas { max-width: 100%; }
           if (cols[6]) entry.startTime = cols[6].trim();
           if (cols[7]) entry.endTime = cols[7].trim();
           if (cols[8]) entry.dayType = cols[8].trim();
+        }
+        if (cols.length >= 11) {
+          const fd = parseFloat(cols[9]); if (fd > 0) entry.fuelDistance = fd;
+          if (cols[10] && cols[10].trim()) entry.fuelType = cols[10].trim();
         }
         allData[date] = entry; count++;
       }
