@@ -784,6 +784,57 @@ canvas { max-width: 100%; }
     <div id="carwash-history-container" style="display:none;"></div>
   </div>
 
+  <!-- ガソリン -->
+  <div class="card" style="margin-bottom: 12px; margin-top: 4px;">
+    <div id="gas-toggle" class="row" style="cursor: pointer;">
+      <p style="font-size: 13px; font-weight: 500; margin: 0;">燃料費</p>
+      <span id="gas-arrow" style="font-size: 13px; color: #aaa;">▶</span>
+    </div>
+    <div id="gas-form" style="display: none; margin-top: 12px;">
+      <div class="row" style="margin-bottom: 10px;">
+        <span style="font-size: 12px; color: #aaa;">日付</span>
+        <input type="date" id="gas-date" style="font-size: 12px; padding: 4px 8px; background: #2a2a2a; border: 0.5px solid #3a3a3a; border-radius: 6px; color: #e8e8e8;">
+      </div>
+      <!-- 車種選択 -->
+      <div style="margin-bottom: 10px;">
+        <label class="label">車種</label>
+        <div style="display: flex; gap: 8px;">
+          <label style="flex:1; display:flex; align-items:center; gap:6px; background:#2a2a2a; border:0.5px solid #3a3a3a; border-radius:8px; padding:8px 10px; cursor:pointer;">
+            <input type="radio" name="gas-type" value="gasoline" checked> <span style="font-size:13px;">ガソリン車</span><span style="font-size:10px;color:#777;margin-left:auto;">×¥20/km</span>
+          </label>
+          <label style="flex:1; display:flex; align-items:center; gap:6px; background:#2a2a2a; border:0.5px solid #3a3a3a; border-radius:8px; padding:8px 10px; cursor:pointer;">
+            <input type="radio" name="gas-type" value="ev"> <span style="font-size:13px;">電気自動車</span><span style="font-size:10px;color:#777;margin-left:auto;">×¥15/km</span>
+          </label>
+        </div>
+      </div>
+      <!-- 走行距離 -->
+      <div style="margin-bottom: 8px;">
+        <label class="label">走行距離(km)</label>
+        <input type="number" id="gas-distance" placeholder="例: 250" inputmode="numeric" style="width: 100%;">
+      </div>
+      <div class="row" style="margin-bottom: 10px; background: #2a2a2a; border-radius: 8px; padding: 8px 10px;">
+        <span style="font-size: 12px; color: #aaa;">燃料費(自動計算)</span>
+        <span id="gas-subtotal" style="font-size: 15px; font-weight: 500; color: #C7A545;">¥0</span>
+      </div>
+      <button id="gas-add-btn" class="btn-primary" style="width: 100%; padding: 10px;">この内容を追加</button>
+    </div>
+  </div>
+
+  <div class="surface-sm" style="margin-bottom: 8px;">
+    <div class="row">
+      <span class="text-secondary">この期間の燃料費累計</span>
+      <span id="gas-total" style="font-size: 16px; font-weight: 500; color: #C7A545;">¥0</span>
+    </div>
+  </div>
+
+  <div id="gas-history-accordion" style="margin-bottom: 4px;">
+    <div id="gas-hist-toggle" class="row" style="cursor:pointer; padding: 8px 0;">
+      <span style="font-size: 12px; color: #aaa;">履歴を見る</span>
+      <span id="gas-hist-arrow" style="font-size: 11px; color: #aaa;">▶</span>
+    </div>
+    <div id="gas-history-container" style="display:none;"></div>
+  </div>
+
 </div>
 
 </div>
@@ -797,6 +848,7 @@ canvas { max-width: 100%; }
   const GOAL_KEY = 'mk_sales_goal';
   const LEAVE_DAYS_KEY = 'mk_leave_days';
   const HOLIDAY_KEY = 'mk_holidays';
+  const GAS_KEY = 'mk_gas_data';
   let allData = {};
   let goal = 0;
   let leaveDays = null;
@@ -1261,6 +1313,17 @@ canvas { max-width: 100%; }
   ];
   let cleaningData = {};
   let carwashData = {};
+  let gasData = {};
+
+  function saveGasData() {
+    try { localStorage.setItem(GAS_KEY, JSON.stringify(gasData)); } catch(e) {}
+  }
+  function loadGasData() {
+    try {
+      const raw = localStorage.getItem(GAS_KEY);
+      gasData = raw ? JSON.parse(raw) : {};
+    } catch(e) { gasData = {}; }
+  }
   let carwashPrices = { 'タムラ': 0, 'PCW': 0, '新橋': 0 };
   let expOffset = 0;
   let cleaningCounts = CLEANING_ITEMS.map(() => 0);
@@ -1367,6 +1430,8 @@ canvas { max-width: 100%; }
 
     // 洗車履歴
     renderCarwashHistory();
+    // ガソリン履歴
+    renderGasHistory();
   }
 
   document.getElementById('cleaning-add-btn').addEventListener('click', () => {
@@ -1719,7 +1784,94 @@ canvas { max-width: 100%; }
         });
       });
     }
+  }  // renderCarwashHistory終了
+
+  function renderGasHistory() {
+    // ガソリン
+    const gasKey = getPeriodKey(expOffset);
+    const gasRecords = gasData[gasKey] || [];
+    const gasTotal = gasRecords.reduce((s, r) => s + r.amount, 0);
+    document.getElementById('gas-total').textContent = fmtYen(gasTotal);
+
+    const gasContainer = document.getElementById('gas-history-container');
+    if (gasRecords.length === 0) {
+      gasContainer.innerHTML = '<p style="text-align:center;color:#888;font-size:13px;padding:0.5rem 0 1rem;">この期間のガソリン記録はまだありません</p>';
+    } else {
+      gasContainer.innerHTML = '<p style="font-size:12px;color:#aaa;margin-bottom:8px;">記録履歴</p>' +
+        gasRecords.map((r, idx) => `
+          <div class="entry-row" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;">
+            <div>
+              <span style="font-size:13px;">${r.date}</span>
+              <span style="font-size:11px;color:#777;margin-left:6px;">${r.distance}km / ${r.type === 'ev' ? '電気自動車' : 'ガソリン車'}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:15px;font-weight:500;color:#C7A545;">${fmtYen(r.amount)}</span>
+              <button class="gas-del" data-key="${gasKey}" data-idx="${idx}" style="background:transparent;border:none;color:#A32D2D;font-size:12px;padding:2px 6px;">削除</button>
+            </div>
+          </div>
+        `).join('');
+      gasContainer.querySelectorAll('.gas-del').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const k = btn.getAttribute('data-key');
+          const idx = parseInt(btn.getAttribute('data-idx'));
+          if (confirm('この記録を削除?')) {
+            gasData[k].splice(idx, 1);
+            saveGasData();
+            renderExpense();
+          }
+        });
+      });
+    }
+  }  // renderGasHistory終了
+
+  // 燃料費: 走行距離×レートで自動計算
+  function updateGasSubtotal() {
+    const distance = parseFloat(document.getElementById('gas-distance').value) || 0;
+    const type = document.querySelector('input[name="gas-type"]:checked')?.value || 'gasoline';
+    const rate = type === 'ev' ? 15 : 20;
+    const total = Math.round(distance * rate);
+    document.getElementById('gas-subtotal').textContent = total > 0 ? fmtYen(total) : '¥0';
   }
+  document.getElementById('gas-distance').addEventListener('input', updateGasSubtotal);
+  document.querySelectorAll('input[name="gas-type"]').forEach(r => r.addEventListener('change', updateGasSubtotal));
+
+  document.getElementById('gas-add-btn').addEventListener('click', () => {
+    const distance = parseFloat(document.getElementById('gas-distance').value) || 0;
+    const type = document.querySelector('input[name="gas-type"]:checked')?.value || 'gasoline';
+    const rate = type === 'ev' ? 15 : 20;
+    const amount = Math.round(distance * rate);
+    if (amount === 0) { showToast('走行距離を入力してください', true); return; }
+    const key = getPeriodKey(expOffset);
+    const date = document.getElementById('gas-date').value || fmtDate(new Date());
+    if (!gasData[key]) gasData[key] = [];
+    gasData[key].push({ date, type, distance, rate, amount });
+    saveGasData();
+    document.getElementById('gas-distance').value = '';
+    document.getElementById('gas-subtotal').textContent = '¥0';
+    document.getElementById('gas-form').style.display = 'none';
+    document.getElementById('gas-arrow').textContent = '▶';
+    showToast(`¥${amount.toLocaleString()} を追加しました`);
+    renderExpense();
+  });
+
+  document.getElementById('gas-toggle').addEventListener('click', () => {
+    const form = document.getElementById('gas-form');
+    const arrow = document.getElementById('gas-arrow');
+    const isOpen = form.style.display !== 'none';
+    form.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent = isOpen ? '▶' : '▼';
+    if (!isOpen) document.getElementById('gas-date').value = fmtDate(new Date());
+  });
+
+  document.getElementById('gas-hist-toggle').addEventListener('click', () => {
+    const container = document.getElementById('gas-history-container');
+    const arrow = document.getElementById('gas-hist-arrow');
+    const isOpen = container.style.display !== 'none';
+    container.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent = isOpen ? '▶' : '▼';
+  });
+
+  loadGasData();
 
   document.getElementById('carwash-toggle').addEventListener('click', () => {
     const form = document.getElementById('carwash-form');
@@ -1973,11 +2125,17 @@ canvas { max-width: 100%; }
     let csv4 = '日付\n';
     Object.keys(holidays).sort().forEach(date => { if (holidays[date]) csv4 += `${date}\n`; });
 
+    let csv5 = '期間キー,日付,車種,走行距離,レート,金額\n';
+    Object.entries(gasData).forEach(([key, records]) => {
+      records.forEach(r => { csv5 += `${key},${r.date},${r.type||'gasoline'},${r.distance||0},${r.rate||20},${r.amount}\n`; });
+    });
+
     const zip = new JSZip();
     zip.file('mk_sales.csv', bom + csv1);
     zip.file('mk_cleaning.csv', bom + csv2);
     zip.file('mk_carwash.csv', bom + csv3);
     zip.file('mk_holidays.csv', bom + csv4);
+    zip.file('mk_gas.csv', bom + csv5);
 
     const blob = await zip.generateAsync({ type: 'blob' });
     const url = URL.createObjectURL(blob);
@@ -2087,6 +2245,26 @@ canvas { max-width: 100%; }
         localStorage.setItem(HOLIDAY_KEY, JSON.stringify(holidays));
       }
 
+      // ガソリンCSV
+      const gasFile = zip.file('mk_gas.csv');
+      if (gasFile) {
+        const text = (await gasFile.async('text')).replace(/^\uFEFF/, '');
+        const lines = text.split(/\r?\n/);
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(',');
+          if (cols.length < 5) continue;
+          const key = cols[0].trim(); const date = cols[1].trim();
+          const type = cols[2].trim() || 'gasoline';
+          const distance = parseFloat(cols[3]) || 0;
+          const rate = parseInt(cols[4]) || 20;
+          const amount = parseInt(cols[5]) || Math.round(distance * rate);
+          if (!key || !date) continue;
+          if (!gasData[key]) gasData[key] = [];
+          gasData[key].push({ date, type, distance, rate, amount });
+        }
+        saveGasData();
+      }
+
       renderSummary();
       showToast('ZIPインポート完了');
     } catch (err) {
@@ -2149,6 +2327,9 @@ canvas { max-width: 100%; }
       // 公休日
       holidays = {};
       localStorage.removeItem(HOLIDAY_KEY);
+      // ガソリン
+      gasData = {};
+      localStorage.removeItem(GAS_KEY);
       // 目標
       goal = 0;
       localStorage.removeItem(GOAL_KEY);
