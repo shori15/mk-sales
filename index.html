@@ -222,10 +222,14 @@ canvas { max-width: 100%; }
               <input type="radio" name="fuel-type" value="ev"> <span>電気自動車</span><span style="color:#777;font-size:9px;margin-left:auto;">¥15/km</span>
             </label>
           </div>
-          <div style="display:flex; gap:6px; align-items:center;">
-            <input type="number" id="fuel-distance" placeholder="走行距離(km)" inputmode="numeric" style="flex:1;min-width:0;">
-            <span id="fuel-calc" style="font-size:13px; font-weight:500; color:#C7A545; min-width:70px; text-align:right;">¥0</span>
+          <div class="row" style="background:#2a2a2a; border-radius:8px; padding:8px 10px;">
+            <span style="font-size:11px; color:#aaa;">走行距離 → 燃料費</span>
+            <div>
+              <span id="fuel-distance-display" style="font-size:12px; color:#777; margin-right:8px;">0km</span>
+              <span id="fuel-calc" style="font-size:13px; font-weight:500; color:#C7A545;">¥0</span>
+            </div>
           </div>
+          <p style="font-size:10px; color:#777; margin-top:6px;">メーターは出勤・退勤の下で入力してください</p>
         </div>
         <input type="hidden" id="quick-fuel-distance" value="0">
         <input type="hidden" id="quick-fuel-type" value="gasoline">
@@ -244,6 +248,16 @@ canvas { max-width: 100%; }
             <input type="time" id="quick-end" style="flex: 1; min-width: 0;">
             <button id="btn-end-now" style="padding: 0 8px; font-size: 11px; white-space: nowrap;">退勤</button>
           </div>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-bottom: 6px;">
+        <div>
+          <label class="label">開始メーター(km)</label>
+          <input type="number" id="quick-meter-start" placeholder="例: 12345" inputmode="numeric" style="width: 100%;">
+        </div>
+        <div>
+          <label class="label">終了メーター(km)</label>
+          <input type="number" id="quick-meter-end" placeholder="例: 12595" inputmode="numeric" style="width: 100%;">
         </div>
       </div>
       <p id="work-hours-preview" class="text-tertiary" style="margin-bottom: 8px; font-size: 11px; min-height: 14px;"></p>
@@ -1261,12 +1275,14 @@ canvas { max-width: 100%; }
     document.getElementById('jihara-form').style.display = 'none';
     document.getElementById('jihara-arrow').textContent = '▶';
     // 燃料費リセット
-    document.getElementById('fuel-distance').value = '';
+    document.getElementById('quick-meter-start').value = '';
+    document.getElementById('quick-meter-end').value = '';
     document.getElementById('quick-fuel-distance').value = '0';
     document.getElementById('quick-fuel-type').value = 'gasoline';
     document.querySelector('input[name="fuel-type"][value="gasoline"]').checked = true;
+    document.getElementById('fuel-distance-display').textContent = '0km';
     document.getElementById('fuel-calc').textContent = '¥0';
-    document.getElementById('fuel-total-preview').textContent = 'タップして入力 ＋';
+    document.getElementById('fuel-total-preview').textContent = 'メーター未入力';
     document.getElementById('fuel-total-preview').style.color = '#777';
     document.getElementById('fuel-form').style.display = 'none';
     document.getElementById('fuel-arrow').textContent = '▶';
@@ -1288,17 +1304,19 @@ canvas { max-width: 100%; }
         : (existing.jihara > 0 ? [existing.jihara] : []);
       renderHighwayList(jissyaItems, 'jissya-list', 'jissya-total-preview', 'quick-jissya');
       renderHighwayList(jiharaItems, 'jihara-list', 'jihara-total-preview', 'quick-jihara');
+      // メーター値の復元
+      document.getElementById('quick-meter-start').value = existing.meterStart || '';
+      document.getElementById('quick-meter-end').value = existing.meterEnd || '';
       // 燃料費の復元
       if (existing.fuelDistance > 0) {
-        document.getElementById('fuel-distance').value = existing.fuelDistance;
         const ft = existing.fuelType || 'gasoline';
         document.querySelector(`input[name="fuel-type"][value="${ft}"]`).checked = true;
         updateFuelCalc();
       } else {
-        document.getElementById('fuel-distance').value = '';
         document.querySelector('input[name="fuel-type"][value="gasoline"]').checked = true;
+        document.getElementById('fuel-distance-display').textContent = '0km';
         document.getElementById('fuel-calc').textContent = '¥0';
-        document.getElementById('fuel-total-preview').textContent = 'タップして入力 ＋';
+        document.getElementById('fuel-total-preview').textContent = 'メーター未入力';
         document.getElementById('fuel-total-preview').style.color = '#777';
         document.getElementById('quick-fuel-distance').value = '0';
       }
@@ -1958,12 +1976,15 @@ canvas { max-width: 100%; }
     arrow.textContent = isOpen ? '▶' : '▼';
   });
 
-  // 燃料費の自動計算
+  // 燃料費の自動計算(メーター差分から)
   function updateFuelCalc() {
-    const distance = parseFloat(document.getElementById('fuel-distance').value) || 0;
+    const meterStart = parseFloat(document.getElementById('quick-meter-start').value) || 0;
+    const meterEnd = parseFloat(document.getElementById('quick-meter-end').value) || 0;
+    const distance = meterEnd > meterStart ? meterEnd - meterStart : 0;
     const type = document.querySelector('input[name="fuel-type"]:checked')?.value || 'gasoline';
     const rate = type === 'ev' ? 15 : 20;
     const total = Math.round(distance * rate);
+    document.getElementById('fuel-distance-display').textContent = distance + 'km';
     document.getElementById('fuel-calc').textContent = fmtYen(total);
     document.getElementById('quick-fuel-distance').value = distance;
     document.getElementById('quick-fuel-type').value = type;
@@ -1973,11 +1994,12 @@ canvas { max-width: 100%; }
       previewEl.textContent = fmtYen(total);
       previewEl.style.color = '#e8e8e8';
     } else {
-      previewEl.textContent = 'タップして入力 ＋';
+      previewEl.textContent = 'メーター未入力';
       previewEl.style.color = '#777';
     }
   }
-  document.getElementById('fuel-distance').addEventListener('input', updateFuelCalc);
+  document.getElementById('quick-meter-start').addEventListener('input', updateFuelCalc);
+  document.getElementById('quick-meter-end').addEventListener('input', updateFuelCalc);
   document.querySelectorAll('input[name="fuel-type"]').forEach(r => r.addEventListener('change', updateFuelCalc));
 
   document.getElementById('jihara-toggle').addEventListener('click', () => {
@@ -2097,10 +2119,14 @@ canvas { max-width: 100%; }
     const jihara = parseInt(document.getElementById('quick-jihara').value) || 0;
     const startTime = document.getElementById('quick-start').value;
     const endTime = document.getElementById('quick-end').value;
+    const meterStart = parseFloat(document.getElementById('quick-meter-start').value) || 0;
+    const meterEnd = parseFloat(document.getElementById('quick-meter-end').value) || 0;
     const fuelDistance = parseFloat(document.getElementById('quick-fuel-distance').value) || 0;
     const fuelType = document.getElementById('quick-fuel-type').value || 'gasoline';
     if (tab === 0 && jissya === 0 && jihara === 0 && !startTime && !endTime && fuelDistance === 0) { alert('金額か出退勤時刻を入れてください'); return; }
     const entry = { tab, jissya, jihara, jissyaItems: [...jissyaItems], jiharaItems: [...jiharaItems], startTime, endTime };
+    if (meterStart > 0) entry.meterStart = meterStart;
+    if (meterEnd > 0) entry.meterEnd = meterEnd;
     if (fuelDistance > 0) {
       entry.fuelDistance = fuelDistance;
       entry.fuelType = fuelType;
@@ -2142,11 +2168,11 @@ canvas { max-width: 100%; }
     const bom = '\uFEFF';
 
     const sorted = Object.entries(allData).sort((a,b) => a[0].localeCompare(b[0]));
-    let csv1 = '日付,売上,実車高速,空車高速(自腹),純売上,実質手取り,出勤時刻,退勤時刻,区分,走行距離,車種\n';
+    let csv1 = '日付,売上,実車高速,空車高速(自腹),純売上,実質手取り,出勤時刻,退勤時刻,区分,走行距離,車種,開始メーター,終了メーター\n';
     sorted.forEach(([date, e]) => {
       const tab = e.tab||0, jissya = e.jissya||0, jihara = e.jihara||0;
       const pure = tab - jissya;
-      csv1 += `${date},${tab},${jissya},${jihara},${pure},${pure-jihara},${e.startTime||''},${e.endTime||''},${e.dayType||''},${e.fuelDistance||0},${e.fuelType||''}\n`;
+      csv1 += `${date},${tab},${jissya},${jihara},${pure},${pure-jihara},${e.startTime||''},${e.endTime||''},${e.dayType||''},${e.fuelDistance||0},${e.fuelType||''},${e.meterStart||0},${e.meterEnd||0}\n`;
     });
     if (leaveDays !== null) csv1 += `#保有有給日数,${leaveDays}\n`;
     if (goal > 0) csv1 += `#月間目標,${goal}\n`;
@@ -2231,6 +2257,10 @@ canvas { max-width: 100%; }
           if (cols.length >= 11) {
             const fd = parseFloat(cols[9]); if (fd > 0) entry.fuelDistance = fd;
             if (cols[10] && cols[10].trim()) entry.fuelType = cols[10].trim();
+          }
+          if (cols.length >= 13) {
+            const ms = parseFloat(cols[11]); if (ms > 0) entry.meterStart = ms;
+            const me = parseFloat(cols[12]); if (me > 0) entry.meterEnd = me;
           }
           allData[date] = entry;
           count++;
@@ -2349,6 +2379,10 @@ canvas { max-width: 100%; }
         if (cols.length >= 11) {
           const fd = parseFloat(cols[9]); if (fd > 0) entry.fuelDistance = fd;
           if (cols[10] && cols[10].trim()) entry.fuelType = cols[10].trim();
+        }
+        if (cols.length >= 13) {
+          const ms = parseFloat(cols[11]); if (ms > 0) entry.meterStart = ms;
+          const me = parseFloat(cols[12]); if (me > 0) entry.meterEnd = me;
         }
         allData[date] = entry; count++;
       }
