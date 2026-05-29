@@ -1,160 +1,2553 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#b8922a" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="MK料金" />
-  <meta name="robots" content="noindex, nofollow" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>MK 料金計算</title>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-    body{background:#f5f4f0;font-family:'Hiragino Sans','Noto Sans JP',sans-serif;color:#111;max-width:480px;margin:0 auto;padding-bottom:48px;}
-    input,select,button{font-family:inherit;}
-    .login-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:#f5f4f0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:32px;max-width:480px;margin:0 auto;left:50%;transform:translateX(-50%);}
-    .login-logo{width:72px;height:72px;background:#111;border-radius:18px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:28px;color:#b8922a;letter-spacing:2px;margin-bottom:12px;}
-    .login-title{font-size:18px;font-weight:800;color:#111;margin-bottom:4px;}
-    .login-sub{font-size:11px;color:#888;margin-bottom:40px;letter-spacing:.5px;}
-    .login-field{width:100%;margin-bottom:12px;}
-    .login-field label{display:block;font-size:10px;color:#888;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;margin-bottom:6px;}
-    .login-field input{width:100%;padding:12px 14px;border-radius:10px;background:#fff;border:1px solid #e0ddd5;color:#111;font-size:15px;outline:none;}
-    .login-field input:focus{border-color:#b8922a;}
-    .login-btn{width:100%;padding:13px;border-radius:10px;background:#111;border:none;color:#b8922a;font-size:15px;font-weight:800;cursor:pointer;margin-top:8px;letter-spacing:.5px;}
-    .login-btn:disabled{opacity:.5;}
-    .login-error{color:#c04020;font-size:12px;text-align:center;margin-top:10px;min-height:18px;}
-    .wrong-img{width:160px;height:160px;object-fit:cover;border-radius:16px;margin-top:12px;display:none;}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MK売上">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>MK売上管理</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+  background: #f5f5f0;
+  color: #2c2c2a;
+  font-size: 15px;
+  line-height: 1.5;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-text-size-adjust: 100%;
+}
+@media (prefers-color-scheme: dark) {
+  body { background: #1a1a1a; color: #e8e8e8; }
+  .card { background: #262626 !important; border-color: #3a3a3a !important; }
+  .surface { background: #2a2a2a !important; }
+  .surface-sm { background: #2a2a2a !important; }
+  input, button { background: #2a2a2a !important; color: #e8e8e8 !important; border-color: #3a3a3a !important; }
+  .btn-primary { background: #fff !important; color: #1a1a1a !important; border-color: #fff !important; }
+  .tab-active { color: #fff !important; border-bottom-color: #fff !important; }
+  .tab-inactive { color: #888 !important; }
+  .text-secondary { color: #aaa !important; }
+  .text-tertiary { color: #777 !important; }
+  .divider { border-color: #3a3a3a !important; }
+  .big-number, .med-number, .small-number { color: #e8e8e8; }
+  .bar-container { background: rgba(255,255,255,0.12) !important; }
+  .entry-row { background: #262626 !important; border-color: #3a3a3a !important; }
+}
+.container { max-width: 600px; margin: 0 auto; padding: 12px; }
+.tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 0.5px solid rgba(0,0,0,0.15); }
+.tab { flex: 1; padding: 12px 8px; border: none; background: transparent; font-size: 14px; cursor: pointer; border-bottom: 2px solid transparent; color: #888; font-family: inherit; }
+.tab-active { color: #2c2c2a; border-bottom-color: #2c2c2a; font-weight: 500; }
+.card { background: #fff; border: 0.5px solid rgba(0,0,0,0.15); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+.surface { background: #ebe9e2; border-radius: 12px; padding: 16px; margin-bottom: 8px; }
+.surface-sm { background: #ebe9e2; border-radius: 8px; padding: 12px; }
+.text-secondary { color: #5f5e5a; font-size: 12px; }
+.text-tertiary { color: #888780; font-size: 11px; }
+.text-danger { color: #A32D2D; }
+.text-success { color: #0F6E56; }
+.divider { border-top: 0.5px solid rgba(0,0,0,0.15); }
+input, button {
+  font-family: inherit; font-size: 15px;
+  border: 0.5px solid rgba(0,0,0,0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  color: #2c2c2a;
+  -webkit-appearance: none;
+}
+input[type="number"] { font-size: 16px; }
+input:focus, button:focus { outline: 2px solid #534AB7; outline-offset: -2px; }
+
+/* チェックボックス・ラジオボタンのカスタムスタイル */
+input[type="checkbox"], input[type="radio"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #888;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: border-color 0.15s, background 0.15s;
+}
+input[type="checkbox"] { border-radius: 6px; }
+input[type="radio"] { border-radius: 50%; }
+
+input[type="checkbox"]:checked {
+  background: #C7A545;
+  border-color: #C7A545;
+}
+input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 6px;
+  width: 6px; height: 10px;
+  border: 2px solid #1a1a1a;
+  border-top: none; border-left: none;
+  transform: rotate(45deg);
+}
+input[type="radio"]:checked {
+  border-color: #C7A545;
+  background: transparent;
+}
+input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #C7A545;
+}
+button { cursor: pointer; -webkit-user-select: none; user-select: none; }
+button:active { transform: scale(0.98); }
+.btn-primary { background: #2c2c2a; color: #fff; border-color: #2c2c2a; font-weight: 500; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.row { display: flex; align-items: center; justify-content: space-between; }
+.label { display: block; font-size: 11px; color: #888780; margin-bottom: 4px; }
+.big-number { font-size: 22px; font-weight: 500; margin: 4px 0 0; }
+.med-number { font-size: 16px; font-weight: 500; margin: 2px 0 0; }
+.small-number { font-size: 15px; font-weight: 500; margin: 2px 0 0; }
+.hidden { display: none !important; }
+.toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #0F6E56; color: #fff; padding: 10px 20px; border-radius: 24px; font-size: 13px; z-index: 100; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.toast.show { opacity: 1; }
+.bar-container { background: rgba(0,0,0,0.08); height: 6px; border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; transition: width 0.3s; }
+.del-btn { background: transparent; border: none; color: #A32D2D; padding: 4px 8px; font-size: 12px; cursor: pointer; }
+.icon-btn { padding: 6px 10px; font-size: 13px; }
+.cal-cell { border-radius: 6px; padding: 4px 2px; text-align: center; min-height: 46px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 2px; }
+.cal-cell.today { background: rgba(199,165,69,0.15); }
+.cal-cell.has-data { background: rgba(199,165,69,0.08); }
+.cal-cell.holiday { background: rgba(100,160,220,0.15); }
+.cal-cell.holiday.has-data { background: rgba(100,160,220,0.12); }
+.cal-cell.is-leave { background: rgba(29,158,117,0.15); }
+.cal-cell.is-absence { background: rgba(224,92,92,0.15); }
+.cal-holiday { font-size: 9px; color: #7ab3e0; font-weight: 500; }
+.cal-day { font-size: 12px; font-weight: 500; line-height: 1.2; }
+.cal-amount { font-size: 9px; color: #C7A545; line-height: 1.2; font-weight: 500; }
+.cal-leave { font-size: 9px; color: #1D9E75; font-weight: 500; }
+.cal-absence { font-size: 9px; color: #E05C5C; font-weight: 500; }
+.cal-empty { color: #555; }
+canvas { max-width: 100%; }
+.entry-row { background: #fff; border: 0.5px solid rgba(0,0,0,0.15); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+</style>
 </head>
 <body>
+<div class="container">
 
-<div class="login-screen" id="login-screen">
-  <div class="login-logo">MK</div>
-  <div class="login-title">MK 料金計算</div>
-  <div class="login-sub">料金表準拠</div>
-  <div class="login-field">
-    <label>ID</label>
-    <input type="text" id="login-id" placeholder="ID を入力" autocomplete="username" />
-  </div>
-  <div class="login-field">
-    <label>パスワード</label>
-    <input type="password" id="login-pw" placeholder="パスワードを入力" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" />
-  </div>
-  <button class="login-btn" id="login-btn" onclick="doLogin()">ログイン</button>
-  <div class="login-error" id="login-error"></div>
-  <img src="wrong.jpg" class="wrong-img" id="wrong-img" alt="wrong password" />
+<div class="tabs" style="position: sticky; top: 0; z-index: 20; background: #1a1a1a; margin-bottom: 12px; padding-bottom: 0;">
+  <button id="tab-summary" class="tab tab-active">サマリー</button>
+  <button id="tab-list" class="tab">日別</button>
+  <button id="tab-expense" class="tab">経費</button>
+  <button id="tab-settings" class="tab">設定</button>
 </div>
 
-<div id="app-root"></div>
+<div id="view-summary">
 
+  <div class="card">
+    <div id="input-toggle" class="row" style="cursor: pointer;">
+      <span style="font-size: 13px; font-weight: 500;">日々の入力</span>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <input type="date" id="quick-date" style="font-size: 12px; height: 28px; padding: 4px 8px; width: auto;" onclick="event.stopPropagation()">
+        <span id="input-arrow" style="font-size: 13px; color: #aaa;">▶</span>
+      </div>
+    </div>
+    <div id="input-form" style="display: none; margin-top: 12px;">
+      <div style="margin-bottom: 8px;">
+        <label class="label">売上(タブ)</label>
+        <input type="number" id="quick-tab" placeholder="0" inputmode="numeric" pattern="[0-9]*" style="width: 100%;">
+      </div>
+
+      <!-- 実車高速 アコーディオン -->
+      <div style="margin-bottom: 8px;">
+        <div id="jissya-toggle" class="row" style="cursor:pointer; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:8px; padding:8px 10px;">
+          <span style="font-size:12px; color:#C7A545; font-weight:500;">実車高速</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span id="jissya-total-preview" style="font-size:12px;font-weight:500;color:#777;">タップして追加 ＋</span>
+            <span id="jissya-arrow" style="font-size:11px;color:#aaa;">▶</span>
+          </div>
+        </div>
+        <div id="jissya-form" style="display:none; margin-top:6px; background:#222; border-radius:8px; padding:8px;">
+          <div style="display:flex;gap:6px;margin-bottom:4px;">
+            <input type="number" id="jissya-input" placeholder="金額を入力" inputmode="numeric" pattern="[0-9]*" style="flex:1;min-width:0;">
+            <button id="jissya-add-btn" style="padding:0 10px;font-size:12px;white-space:nowrap;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;">追加</button>
+          </div>
+          <div id="jissya-list" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+        </div>
+        <input type="hidden" id="quick-jissya" value="0">
+      </div>
+
+      <!-- 空車高速 アコーディオン -->
+      <div style="margin-bottom: 8px;">
+        <div id="jihara-toggle" class="row" style="cursor:pointer; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:8px; padding:8px 10px;">
+          <span style="font-size:12px; color:#E05C5C; font-weight:500;">空車高速(自腹)</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span id="jihara-total-preview" style="font-size:12px;font-weight:500;color:#777;">タップして追加 ＋</span>
+            <span id="jihara-arrow" style="font-size:11px;color:#aaa;">▶</span>
+          </div>
+        </div>
+        <div id="jihara-form" style="display:none; margin-top:6px; background:#222; border-radius:8px; padding:8px;">
+          <div style="display:flex;gap:6px;margin-bottom:4px;">
+            <input type="number" id="jihara-input" placeholder="金額を入力" inputmode="numeric" pattern="[0-9]*" style="flex:1;min-width:0;">
+            <button id="jihara-add-btn" style="padding:0 10px;font-size:12px;white-space:nowrap;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;">追加</button>
+          </div>
+          <div id="jihara-list" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+        </div>
+        <input type="hidden" id="quick-jihara" value="0">
+      </div>
+
+
+      <div style="margin-bottom: 8px;">
+        <div id="fuel-toggle" class="row" style="cursor:pointer; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:8px; padding:8px 10px;">
+          <span style="font-size:12px; color:#7ab3e0; font-weight:500;">燃料費</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span id="fuel-total-preview" style="font-size:12px;font-weight:500;color:#777;">タップして入力 ＋</span>
+            <span id="fuel-arrow" style="font-size:11px;color:#aaa;">▶</span>
+          </div>
+        </div>
+        <div id="fuel-form" style="display:none; margin-top:6px; background:#222; border-radius:8px; padding:8px;">
+          <div style="display:flex; gap:6px; margin-bottom:8px;">
+            <label style="flex:1; display:flex; align-items:center; gap:5px; background:#2a2a2a; border:0.5px solid #3a3a3a; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:11px;">
+              <input type="radio" name="fuel-type" value="gasoline" checked> <span>ガソリン車</span><span style="color:#777;font-size:9px;margin-left:auto;">¥20/km</span>
+            </label>
+            <label style="flex:1; display:flex; align-items:center; gap:5px; background:#2a2a2a; border:0.5px solid #3a3a3a; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:11px;">
+              <input type="radio" name="fuel-type" value="ev"> <span>電気自動車</span><span style="color:#777;font-size:9px;margin-left:auto;">¥15/km</span>
+            </label>
+          </div>
+          <div class="grid-2" style="margin-bottom:8px;">
+            <div>
+              <label class="label">開始メーター(km)</label>
+              <input type="number" id="quick-meter-start" placeholder="例: 12345" inputmode="numeric" style="width:100%;">
+            </div>
+            <div>
+              <label class="label">終了メーター(km)</label>
+              <input type="number" id="quick-meter-end" placeholder="例: 12595" inputmode="numeric" style="width:100%;">
+            </div>
+          </div>
+          <div class="row" style="background:#2a2a2a; border-radius:8px; padding:8px 10px;">
+            <span style="font-size:11px; color:#aaa;">走行距離 → 燃料費</span>
+            <div>
+              <span id="fuel-distance-display" style="font-size:12px; color:#777; margin-right:8px;">0km</span>
+              <span id="fuel-calc" style="font-size:13px; font-weight:500; color:#C7A545;">¥0</span>
+            </div>
+          </div>
+        </div>
+        <input type="hidden" id="quick-fuel-distance" value="0">
+        <input type="hidden" id="quick-fuel-type" value="gasoline">
+      </div>
+      <div class="grid-2" style="margin-bottom: 6px;">
+        <div>
+          <label class="label">出勤時刻</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="time" id="quick-start" style="flex: 1; min-width: 0;">
+            <button id="btn-start-now" style="padding: 0 8px; font-size: 11px; white-space: nowrap;">出勤</button>
+          </div>
+        </div>
+        <div>
+          <label class="label">退勤時刻</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="time" id="quick-end" style="flex: 1; min-width: 0;">
+            <button id="btn-end-now" style="padding: 0 8px; font-size: 11px; white-space: nowrap;">退勤</button>
+          </div>
+        </div>
+      </div>
+      <p id="work-hours-preview" class="text-tertiary" style="margin-bottom: 8px; font-size: 11px; min-height: 14px;"></p>
+      <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+        <button id="btn-leave" style="flex: 1; padding: 8px; font-size: 12px; background: #2a2a2a; border: 0.5px solid #3a3a3a; color: #C7A545; border-radius: 8px;">有給で記録</button>
+        <button id="btn-absence" style="flex: 1; padding: 8px; font-size: 12px; background: #2a2a2a; border: 0.5px solid #3a3a3a; color: #E05C5C; border-radius: 8px;">欠勤で記録</button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button id="quick-save" class="btn-primary" style="flex: 1; padding: 12px;">保存</button>
+        <span id="quick-msg" class="text-secondary" style="min-width: 70px;"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="margin: 16px 0 12px;">
+    <div>
+      <div class="text-secondary">締め期間</div>
+      <div id="period-label" style="font-size: 15px; font-weight: 500; margin-top: 2px;">読み込み中...</div>
+    </div>
+    <div style="display: flex; gap: 4px;">
+      <button id="prev-period" class="icon-btn">←</button>
+      <button id="next-period" class="icon-btn">→</button>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="surface">
+      <div class="text-secondary">売上(タブ)</div>
+      <div id="total-tab" class="big-number">¥0</div>
+    </div>
+    <div class="surface">
+      <div class="text-secondary">純売上</div>
+      <div id="total-pure" class="big-number">¥0</div>
+    </div>
+  </div>
+
+  <div class="surface-sm" style="margin-bottom: 8px;">
+    <div class="row" style="margin-bottom: 6px;">
+      <span class="text-secondary">実車高速</span>
+      <span id="jissya-total" class="med-number text-danger">-¥0</span>
+    </div>
+    <div class="row" style="margin-bottom: 6px;">
+      <span class="text-secondary">空車高速(自腹)</span>
+      <span id="jihara-total" class="med-number text-danger">-¥0</span>
+    </div>
+    <div class="row" style="margin-bottom: 6px;">
+      <span class="text-secondary">クリーニング代</span>
+      <span id="cleaning-summary" class="med-number text-danger">-¥0</span>
+    </div>
+    <div class="row" style="margin-bottom: 6px;">
+      <span class="text-secondary">洗車代</span>
+      <span id="carwash-summary" class="med-number text-danger">-¥0</span>
+    </div>
+    <div class="row" style="margin-bottom: 6px;">
+      <span class="text-secondary">燃料費</span>
+      <span id="fuel-summary" class="med-number text-danger">-¥0</span>
+    </div>
+    <div class="row" style="margin-bottom: 6px;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="text-secondary">Uber手数料(20%)</span>
+        <button id="uber-open-btn" style="font-size:10px;padding:2px 7px;border-radius:10px;border:0.5px solid #9B59B6;background:transparent;color:#9B59B6;cursor:pointer;">入力 ＋</button>
+      </div>
+      <span id="uber-summary" class="med-number text-danger">-¥0</span>
+    </div>
+    <div class="divider" style="margin: 8px 0;"></div>
+    <div class="row">
+      <span class="text-secondary">実質手取り</span>
+      <span id="net-amount" class="med-number">¥0</span>
+    </div>
+  </div>
+
+  <div id="goal-card" class="surface-sm hidden" style="margin-bottom: 12px;">
+    <div class="row" style="margin-bottom: 6px;">
+      <span class="text-secondary">目標達成率(純売上基準)</span>
+      <span id="goal-percent" class="med-number">0%</span>
+    </div>
+    <div class="bar-container">
+      <div id="goal-bar" class="bar-fill" style="background: #1D9E75; width: 0%;"></div>
+    </div>
+    <div id="goal-detail" class="text-tertiary" style="margin-top: 6px;"></div>
+    <div id="pace-detail" class="divider" style="margin-top: 8px; padding-top: 8px; display: none;">
+      <div class="row">
+        <span class="text-secondary">残り稼働日(月22日想定)</span>
+        <span id="remaining-days" class="med-number">0日</span>
+      </div>
+      <div class="row" style="margin-top: 4px;">
+        <span class="text-secondary">1日あたり必要額(純売上)</span>
+        <span id="daily-required" class="med-number">¥0</span>
+      </div>
+      <div class="row" style="margin-top: 4px;">
+        <span class="text-secondary">予想着地(現ペース×実稼働日)</span>
+        <span id="projected-total" class="med-number" style="color: #C7A545;">¥0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin: 16px 0 8px;">
+    <div class="surface-sm">
+      <div class="text-secondary">稼働日数 / 残り</div>
+      <div style="display: flex; align-items: baseline; gap: 6px; margin-top: 2px;">
+        <div id="work-days" class="small-number">0日</div>
+        <div style="font-size: 11px; color: #777;">/ 残</div>
+        <div id="remaining-work-days" class="small-number" style="color: #C7A545;">22日</div>
+      </div>
+    </div>
+    <div class="surface-sm">
+      <div class="text-secondary">日平均(純売上)</div>
+      <div id="avg-daily" class="small-number">¥0</div>
+    </div>
+  </div>
+  <div class="grid-2" style="margin-bottom: 8px;">
+    <div class="surface-sm">
+      <div class="text-secondary">最高日(純売上)</div>
+      <div id="max-daily" class="small-number">¥0</div>
+    </div>
+    <div class="surface-sm">
+      <div class="text-secondary">残り有給</div>
+      <div id="remaining-leave" class="small-number" style="color: #C7A545;">--</div>
+    </div>
+  </div>
+  <div class="grid-2" style="margin-bottom: 16px;">
+    <div class="surface-sm">
+      <div class="text-secondary">累計拘束時間</div>
+      <div id="total-work-time" class="small-number">0時間</div>
+    </div>
+    <div class="surface-sm">
+      <div class="text-secondary">残業(8h超)</div>
+      <div id="total-overtime" class="small-number" style="color: #C7A545;">0時間</div>
+    </div>
+  </div>
+
+  <div>
+    <div class="text-secondary" style="margin-bottom: 8px;">日別推移(純売上)</div>
+    <div style="position: relative; height: 180px;">
+      <canvas id="trend-chart"></canvas>
+    </div>
+  </div>
+</div>
+
+<div id="view-list" class="hidden">
+
+  <!-- カレンダー(スクロールしても上に固定) -->
+  <div class="card" style="margin-bottom: 12px; padding: 10px; position: sticky; top: 50px; z-index: 10; background: #262626;">
+    <div class="row" style="margin-bottom: 8px;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <button id="cal-prev" class="icon-btn">←</button>
+        <div id="cal-period-label" style="font-size: 13px; font-weight: 500;"></div>
+        <button id="cal-next" class="icon-btn">→</button>
+      </div>
+      <div style="display:flex;gap:12px;align-items:flex-end;">
+        <div style="text-align: right;">
+          <div style="font-size: 10px; color: #7ab3e0;">公休</div>
+          <div id="cal-holiday-count" style="font-size: 14px; font-weight: 500; color: #7ab3e0;">0日</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 10px; color: #aaa;">純売上合計</div>
+          <div id="cal-total" style="font-size: 14px; font-weight: 500; color: #C7A545;">¥0</div>
+        </div>
+      </div>
+    </div>
+    <!-- 曜日ヘッダー -->
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 4px;">
+      <div style="text-align:center;font-size:10px;color:#888;">日</div>
+      <div style="text-align:center;font-size:10px;color:#888;">月</div>
+      <div style="text-align:center;font-size:10px;color:#888;">火</div>
+      <div style="text-align:center;font-size:10px;color:#888;">水</div>
+      <div style="text-align:center;font-size:10px;color:#888;">木</div>
+      <div style="text-align:center;font-size:10px;color:#888;">金</div>
+      <div style="text-align:center;font-size:10px;color:#888;">土</div>
+    </div>
+    <div id="cal-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;"></div>
+  </div>
+
+  <div id="list-container"></div>
+</div>
+
+<div id="view-settings" class="hidden">
+  <div class="card">
+    <div style="font-weight: 500; margin-bottom: 8px;">月間目標(純売上ベース)</div>
+    <input type="number" id="input-goal" placeholder="例: 1200000" style="width: 100%; margin-bottom: 8px;">
+    <button id="save-goal-btn" class="btn-primary" style="width: 100%; padding: 10px;">目標を保存</button>
+
+    <div style="font-weight: 500; margin: 16px 0 8px;">保有有給日数</div>
+    <p class="text-tertiary" style="margin-bottom: 8px; font-size: 11px;">有給を使うと自動で-1されます</p>
+    <div style="display: flex; gap: 8px;">
+      <input type="number" id="input-leave-days" placeholder="例: 10" style="flex: 1;">
+      <button id="save-leave-days-btn" class="btn-primary" style="padding: 10px 16px;">保存</button>
+    </div>
+
+    <div style="font-weight: 500; margin: 16px 0 8px;">データ管理</div>
+    <button id="export-btn" style="width: 100%; padding: 10px; margin-bottom: 8px;">📦 全データをエクスポート(ZIP)</button>
+    <button id="import-btn" style="width: 100%; padding: 10px; margin-bottom: 8px;">📥 ZIPからインポート</button>
+    <input type="file" id="import-file" accept=".zip,.csv" style="display: none;">
+    <button id="reset-btn" style="width: 100%; padding: 10px; color: #A32D2D;">全データを削除</button>
+
+    <div class="text-tertiary" style="margin-top: 16px; line-height: 1.6;">
+      締め日: 21日〜翌20日<br>
+      データはこのiPhone内に保存されます<br>
+      v1.0
+    </div>
+  </div>
+</div>
+
+<div id="view-expense" class="hidden">
+
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+    <div>
+      <p style="margin: 0; font-size: 12px; color: #5f5e5a;">締め期間</p>
+      <p id="exp-period-label" style="margin: 2px 0 0; font-size: 15px; font-weight: 500;">読み込み中...</p>
+    </div>
+    <div style="display: flex; gap: 4px;">
+      <button id="exp-prev-period" class="icon-btn">←</button>
+      <button id="exp-next-period" class="icon-btn">→</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 12px;">
+    <div id="cleaning-toggle" class="row" style="cursor: pointer;">
+      <p style="font-size: 13px; font-weight: 500; margin: 0;">クリーニング計算</p>
+      <span id="cleaning-arrow" style="font-size: 13px; color: #aaa;">▶</span>
+    </div>
+    <div id="cleaning-form" style="display: none; margin-top: 12px;">
+      <div class="row" style="margin-bottom: 10px;">
+        <span style="font-size: 12px; color: #aaa;">日付</span>
+        <input type="date" id="cleaning-date" style="font-size: 12px; padding: 4px 8px; background: #2a2a2a; border: 0.5px solid #3a3a3a; border-radius: 6px; color: #e8e8e8;">
+      </div>
+      <div id="cleaning-items"></div>
+      <div class="divider" style="margin: 10px 0;"></div>
+      <div class="row" style="margin-bottom: 10px;">
+        <span style="font-size: 13px; font-weight: 500;">今回の合計</span>
+        <span id="cleaning-subtotal" style="font-size: 20px; font-weight: 500; color: #C7A545;">¥0</span>
+      </div>
+      <button id="cleaning-add-btn" class="btn-primary" style="width: 100%; padding: 10px;">この金額を追加</button>
+    </div>
+  </div>
+
+  <div class="surface-sm" style="margin-bottom: 8px;">
+    <div class="row">
+      <span class="text-secondary">この期間のクリーニング累計</span>
+      <span id="cleaning-total" style="font-size: 16px; font-weight: 500; color: #C7A545;">¥0</span>
+    </div>
+  </div>
+
+  <!-- クリーニング履歴アコーディオン -->
+  <div id="cleaning-history-accordion" style="margin-bottom: 4px;">
+    <div id="cleaning-hist-toggle" class="row" style="cursor:pointer; padding: 8px 0;">
+      <span style="font-size: 12px; color: #aaa;">履歴を見る</span>
+      <span id="cleaning-hist-arrow" style="font-size: 11px; color: #aaa;">▶</span>
+    </div>
+    <div id="cleaning-history-container" style="display:none;"></div>
+  </div>
+
+  <!-- 洗車アコーディオン -->
+  <div class="card" style="margin-bottom: 12px; margin-top: 4px;">
+    <div id="carwash-toggle" class="row" style="cursor: pointer;">
+      <p style="font-size: 13px; font-weight: 500; margin: 0;">洗車</p>
+      <span id="carwash-arrow" style="font-size: 13px; color: #aaa;">▶</span>
+    </div>
+    <div id="carwash-form" style="display: none; margin-top: 12px;">
+      <!-- 日付選択 -->
+      <div class="row" style="margin-bottom: 10px;">
+        <span style="font-size: 12px; color: #aaa;">日付</span>
+        <input type="date" id="carwash-date" style="font-size: 12px; padding: 4px 8px; background: #2a2a2a; border: 0.5px solid #3a3a3a; border-radius: 6px; color: #e8e8e8;">
+      </div>
+
+      <!-- STEP 1: 洗車屋選択 -->
+      <div id="cw-step1">
+        <p class="text-tertiary" style="margin-bottom: 10px;">どの洗車屋を利用しましたか?</p>
+        <div id="carwash-buttons" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        <p id="carwash-price-note" class="text-tertiary" style="margin-top: 8px; font-size: 11px;"></p>
+      </div>
+
+      <!-- STEP 2: 新橋メニュー選択 -->
+      <div id="cw-step2" style="display:none;">
+        <div class="row" style="margin-bottom: 10px;">
+          <span style="font-size: 12px; color: #aaa;">新橋</span>
+          <button id="cw-back" style="font-size: 11px; padding: 4px 8px; color: #aaa; background: transparent; border: 0.5px solid #3a3a3a; border-radius: 6px;">← 戻る</button>
+        </div>
+        <p class="text-tertiary" style="margin-bottom: 8px;">車種メニューを選択</p>
+        <div style="display: flex; flex-direction: column; gap: 6px;" id="cw-menu-btns">
+          <button class="cw-menu-btn" data-menu="セダンA" data-price="1200" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>セダンA <span style="font-size:10px;color:#777;">クラウン・EQC・ミライ</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,200</span>
+          </button>
+          <button class="cw-menu-btn" data-menu="セダンB" data-price="1300" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>セダンB <span style="font-size:10px;color:#777;">LS・BMW・ベンツS・RR</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,300</span>
+          </button>
+          <button class="cw-menu-btn" data-menu="ワゴンA" data-price="1400" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>ワゴンA <span style="font-size:10px;color:#777;">アルファード・ベンツV・LM</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,400</span>
+          </button>
+          <button class="cw-menu-btn" data-menu="ワゴンB" data-price="1900" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>ワゴンB <span style="font-size:10px;color:#777;">グランエース・ハイエース</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,900</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 3: 新橋フル洗車&オプション選択 -->
+      <div id="cw-step3" style="display:none;">
+        <div class="row" style="margin-bottom: 10px;">
+          <div>
+            <span style="font-size:12px;color:#aaa;">新橋 / </span>
+            <span id="cw-selected-menu" style="font-size:12px;font-weight:500;color:#C7A545;"></span>
+          </div>
+          <button id="cw-back2" style="font-size:11px;padding:4px 8px;color:#aaa;background:transparent;border:0.5px solid #3a3a3a;border-radius:6px;">← 戻る</button>
+        </div>
+
+        <!-- フル洗車トグル -->
+        <div style="background:#2a2a2a;border-radius:8px;padding:10px 12px;margin-bottom:8px;">
+          <div class="row">
+            <div>
+              <span style="font-size:13px;">フル洗車</span>
+              <span style="font-size:10px;color:#777;margin-left:6px;">車内全体水拭き・タイヤハウス等</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:12px;color:#C7A545;">+¥1,000</span>
+              <button id="cw-full-toggle" style="width:44px;height:26px;border-radius:13px;border:none;background:#444;cursor:pointer;position:relative;transition:background 0.2s;">
+                <span id="cw-full-knob" style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left 0.2s;"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- オプション -->
+        <p class="text-tertiary" style="margin-bottom:6px;">追加オプション(複数選択可)</p>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+          <label style="background:#2a2a2a;border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <div>
+              <span style="font-size:13px;">A・撥水</span>
+              <span style="font-size:10px;color:#777;margin-left:4px;">つや出し/ポリマー</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:12px;color:#C7A545;">+¥200</span>
+              <input type="checkbox" id="cw-opt-a" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+          <label style="background:#2a2a2a;border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <div>
+              <span style="font-size:13px;">B・タイヤ洗浄</span>
+              <span style="font-size:10px;color:#777;margin-left:4px;">洗剤+ブラシ</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:12px;color:#C7A545;">+¥400</span>
+              <input type="checkbox" id="cw-opt-b" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+          <label style="background:#2a2a2a;border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <div>
+              <span style="font-size:13px;">C・タイヤ洗浄</span>
+              <span style="font-size:10px;color:#777;margin-left:4px;">水洗い+ブラシ</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:12px;color:#C7A545;">+¥300</span>
+              <input type="checkbox" id="cw-opt-c" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+        </div>
+
+        <!-- 合計と記録ボタン -->
+        <div class="divider" style="margin: 0 0 10px;"></div>
+        <div class="row" style="margin-bottom:10px;">
+          <span style="font-size:13px;font-weight:500;">合計</span>
+          <span id="cw-total-display" style="font-size:20px;font-weight:500;color:#C7A545;">¥1,200</span>
+        </div>
+        <button id="cw-shinbashi-save" class="btn-primary" style="width:100%;padding:10px;">記録する</button>
+      </div>
+
+      <!-- STEP 4: タムラ車種選択 -->
+      <div id="cw-step4" style="display:none;">
+        <div class="row" style="margin-bottom: 10px;">
+          <span style="font-size: 12px; color: #aaa;">タムラ</span>
+          <button id="cw-back-tamura" style="font-size: 11px; padding: 4px 8px; color: #aaa; background: transparent; border: 0.5px solid #3a3a3a; border-radius: 6px;">← 戻る</button>
+        </div>
+        <p class="text-tertiary" style="margin-bottom: 8px;">車種メニューを選択(全車種¥1,500)</p>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <button class="cw-tamura-menu-btn" data-menu="セダンA" data-price="1500" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>セダンA <span style="font-size:10px;color:#777;">クラウン・EQC・MIRAI</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,500</span>
+          </button>
+          <button class="cw-tamura-menu-btn" data-menu="セダンB" data-price="1500" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>セダンB <span style="font-size:10px;color:#777;">LS・ベンツS・BMW・RR</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,500</span>
+          </button>
+          <button class="cw-tamura-menu-btn" data-menu="ワゴンA" data-price="1500" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>ワゴンA <span style="font-size:10px;color:#777;">アルファード・ベンツV・LM・マイバッハ</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,500</span>
+          </button>
+          <button class="cw-tamura-menu-btn" data-menu="ワゴンB" data-price="1500" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>ワゴンB <span style="font-size:10px;color:#777;">グランエース・ハイエース</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,500</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 5: タムラオプション選択 -->
+      <div id="cw-step5" style="display:none;">
+        <div class="row" style="margin-bottom: 10px;">
+          <div>
+            <span style="font-size:12px;color:#aaa;">タムラ / </span>
+            <span id="cw-tamura-selected-menu" style="font-size:12px;font-weight:500;color:#C7A545;"></span>
+          </div>
+          <button id="cw-back-tamura2" style="font-size:11px;padding:4px 8px;color:#aaa;background:transparent;border:0.5px solid #3a3a3a;border-radius:6px;">← 戻る</button>
+        </div>
+
+        <!-- 車内清掃(択一) -->
+        <p class="text-tertiary" style="margin-bottom:5px;">車内清掃</p>
+        <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;">
+          <label style="background:#2a2a2a;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <div>
+              <span style="font-size:12px;">なし</span>
+            </div>
+            <input type="radio" name="cw-tamura-clean" value="none" data-price="0" checked style="width:18px;height:18px;cursor:pointer;">
+          </label>
+          <label style="background:#2a2a2a;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <div>
+              <span style="font-size:12px;">A・水拭き+窓+掃除機</span>
+              <span style="font-size:10px;color:#777;margin-left:4px;">フルパック</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:#C7A545;">+¥400</span>
+              <input type="radio" name="cw-tamura-clean" value="A" data-price="400" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+          <label style="background:#2a2a2a;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <div>
+              <span style="font-size:12px;">B・掃除機のみ</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:#C7A545;">+¥200</span>
+              <input type="radio" name="cw-tamura-clean" value="B" data-price="200" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+        </div>
+
+        <!-- 追加オプション(複数選択可) -->
+        <p class="text-tertiary" style="margin-bottom:5px;">追加オプション</p>
+        <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;">
+          <label style="background:#2a2a2a;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <div>
+              <span style="font-size:12px;">タイヤハウス</span>
+              <span style="font-size:10px;color:#777;margin-left:4px;">内部清掃</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:#C7A545;">+¥500</span>
+              <input type="checkbox" id="cw-tamura-tire" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+          <label style="background:#2a2a2a;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <div>
+              <span style="font-size:12px;">ヒンジ・ピラー</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:#C7A545;">+¥400</span>
+              <input type="checkbox" id="cw-tamura-hinge" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+        </div>
+
+        <div class="divider" style="margin: 0 0 10px;"></div>
+        <div class="row" style="margin-bottom:10px;">
+          <span style="font-size:13px;font-weight:500;">合計</span>
+          <span id="cw-tamura-total-display" style="font-size:20px;font-weight:500;color:#C7A545;">¥1,500</span>
+        </div>
+        <button id="cw-tamura-save" class="btn-primary" style="width:100%;padding:10px;">記録する</button>
+      </div>
+
+      <!-- STEP 6: PCW車種選択 -->
+      <div id="cw-step6" style="display:none;">
+        <div class="row" style="margin-bottom: 10px;">
+          <span style="font-size: 12px; color: #aaa;">PCW</span>
+          <button id="cw-back-pcw" style="font-size: 11px; padding: 4px 8px; color: #aaa; background: transparent; border: 0.5px solid #3a3a3a; border-radius: 6px;">← 戻る</button>
+        </div>
+        <p class="text-tertiary" style="margin-bottom: 8px;">車種メニューを選択(全車種¥1,500)</p>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <button class="cw-pcw-menu-btn" data-menu="セダンA" data-price="1500" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>セダンA <span style="font-size:10px;color:#777;">クラウン・EQC・MIRAI</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,500</span>
+          </button>
+          <button class="cw-pcw-menu-btn" data-menu="セダンB" data-price="1500" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>セダンB <span style="font-size:10px;color:#777;">LEXUS・ベンツS・BMW・RR</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,500</span>
+          </button>
+          <button class="cw-pcw-menu-btn" data-menu="ワゴンA" data-price="1500" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>ワゴンA <span style="font-size:10px;color:#777;">アルファード・ベンツV</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,500</span>
+          </button>
+          <button class="cw-pcw-menu-btn" data-menu="ワゴンB" data-price="1500" style="padding:10px 12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:13px;display:flex;justify-content:space-between;">
+            <span>ワゴンB <span style="font-size:10px;color:#777;">グランエース・ハイエース</span></span>
+            <span style="color:#C7A545;font-weight:500;">¥1,500</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 7: PCWオプション選択 -->
+      <div id="cw-step7" style="display:none;">
+        <div class="row" style="margin-bottom: 10px;">
+          <div>
+            <span style="font-size:12px;color:#aaa;">PCW / </span>
+            <span id="cw-pcw-selected-menu" style="font-size:12px;font-weight:500;color:#C7A545;"></span>
+          </div>
+          <button id="cw-back-pcw2" style="font-size:11px;padding:4px 8px;color:#aaa;background:transparent;border:0.5px solid #3a3a3a;border-radius:6px;">← 戻る</button>
+        </div>
+
+        <p class="text-tertiary" style="margin-bottom:5px;">車内清掃</p>
+        <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;">
+          <label style="background:#2a2a2a;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <span style="font-size:12px;">なし</span>
+            <input type="radio" name="cw-pcw-clean" value="none" data-price="0" checked style="width:18px;height:18px;cursor:pointer;">
+          </label>
+          <label style="background:#2a2a2a;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <div>
+              <span style="font-size:12px;">A・水拭き+窓+掃除機</span>
+              <span style="font-size:10px;color:#777;margin-left:4px;">フルパック</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:#C7A545;">+¥400</span>
+              <input type="radio" name="cw-pcw-clean" value="A" data-price="400" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+          <label style="background:#2a2a2a;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <span style="font-size:12px;">B・掃除機のみ</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:#C7A545;">+¥200</span>
+              <input type="radio" name="cw-pcw-clean" value="B" data-price="200" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+        </div>
+
+        <p class="text-tertiary" style="margin-bottom:5px;">追加オプション</p>
+        <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;">
+          <label style="background:#2a2a2a;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <div>
+              <span style="font-size:12px;">タイヤハウス</span>
+              <span style="font-size:10px;color:#777;margin-left:4px;">内部清掃</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:#C7A545;">+¥500</span>
+              <input type="checkbox" id="cw-pcw-tire" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+          <label style="background:#2a2a2a;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;">
+            <span style="font-size:12px;">ヒンジ・ピラー</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:#C7A545;">+¥400</span>
+              <input type="checkbox" id="cw-pcw-hinge" style="width:18px;height:18px;cursor:pointer;">
+            </div>
+          </label>
+        </div>
+
+        <div class="divider" style="margin: 0 0 10px;"></div>
+        <div class="row" style="margin-bottom:10px;">
+          <span style="font-size:13px;font-weight:500;">合計</span>
+          <span id="cw-pcw-total-display" style="font-size:20px;font-weight:500;color:#C7A545;">¥1,500</span>
+        </div>
+        <button id="cw-pcw-save" class="btn-primary" style="width:100%;padding:10px;">記録する</button>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="surface-sm" style="margin-bottom: 8px;">
+    <div class="row">
+      <span class="text-secondary">この期間の洗車累計</span>
+      <span id="carwash-total" style="font-size: 16px; font-weight: 500; color: #C7A545;">¥0</span>
+    </div>
+  </div>
+
+  <!-- 洗車履歴アコーディオン -->
+  <div id="carwash-history-accordion" style="margin-bottom: 4px;">
+    <div id="carwash-hist-toggle" class="row" style="cursor:pointer; padding: 8px 0;">
+      <span style="font-size: 12px; color: #aaa;">履歴を見る</span>
+      <span id="carwash-hist-arrow" style="font-size: 11px; color: #aaa;">▶</span>
+    </div>
+    <div id="carwash-history-container" style="display:none;"></div>
+  </div>
+
+  <!-- ガソリン -->
+  <div class="card" style="margin-bottom: 12px; margin-top: 4px;">
+    <div id="gas-toggle" class="row" style="cursor: pointer;">
+      <p style="font-size: 13px; font-weight: 500; margin: 0;">燃料費(履歴)</p>
+      <span id="gas-arrow" style="font-size: 13px; color: #aaa;">▶</span>
+    </div>
+    <div id="gas-form" style="display: none; margin-top: 12px;">
+      <p style="font-size: 11px; color: #777; text-align: center; padding: 10px 0;">燃料費はサマリーの「日々の入力」から記録できます</p>
+    </div>
+  </div>
+
+  <div class="surface-sm" style="margin-bottom: 8px;">
+    <div class="row">
+      <span class="text-secondary">この期間の燃料費累計</span>
+      <span id="gas-total" style="font-size: 16px; font-weight: 500; color: #C7A545;">¥0</span>
+    </div>
+  </div>
+
+  <div id="gas-history-accordion" style="margin-bottom: 4px;">
+    <div id="gas-hist-toggle" class="row" style="cursor:pointer; padding: 8px 0;">
+      <span style="font-size: 12px; color: #aaa;">履歴を見る</span>
+      <span id="gas-hist-arrow" style="font-size: 11px; color: #aaa;">▶</span>
+    </div>
+    <div id="gas-history-container" style="display:none;"></div>
+  </div>
+
+</div>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- Uberモーダル -->
+<div id="uber-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:#262626; border:0.5px solid #3a3a3a; border-radius:16px; padding:20px; width:90%; max-width:340px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <span style="font-size:14px;font-weight:500;color:#9B59B6;">Uber売上の入力</span>
+      <button id="uber-modal-close" style="background:transparent;border:none;color:#888;font-size:20px;cursor:pointer;">×</button>
+    </div>
+    <div style="font-size:11px;color:#777;margin-bottom:10px;">日付を選んでUber売上を追加してください<br>手数料20%が実質手取りから引かれます</div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:10px;color:#777;display:block;margin-bottom:4px;">日付</label>
+      <input type="date" id="uber-date" style="width:100%;background:#2a2a2a;border:0.5px solid #3a3a3a;border-radius:8px;padding:7px 10px;color:#e8e8e8;font-size:13px;">
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:10px;color:#777;display:block;margin-bottom:4px;">Uber売上金額</label>
+      <div style="display:flex;gap:6px;">
+        <input type="number" id="uber-modal-input" placeholder="金額を入力" inputmode="numeric" style="flex:1;min-width:0;">
+        <button id="uber-modal-add-btn" style="padding:0 12px;font-size:12px;white-space:nowrap;border-radius:8px;border:0.5px solid #9B59B6;background:transparent;color:#9B59B6;">追加</button>
+      </div>
+    </div>
+    <div id="uber-modal-list" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;min-height:20px;"></div>
+    <div style="display:flex;gap:8px;">
+      <button id="uber-modal-save" style="flex:1;padding:10px;background:#9B59B6;border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:500;">保存</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-const AUTH_ID = 'tokyomk';
+(function() {
+  const STORAGE_KEY = 'mk_sales_data';
+  const GOAL_KEY = 'mk_sales_goal';
+  const LEAVE_DAYS_KEY = 'mk_leave_days';
+  const HOLIDAY_KEY = 'mk_holidays';
+  const GAS_KEY = 'mk_gas_data';
+  let allData = {};
+  let goal = 0;
+  let leaveDays = null;
+  let holidays = {}; // { '2026-05-01': true, ... }
+  let viewOffset = 0;
+  let chart = null;
 
-// Base64 → ArrayBuffer
-function b64ToBuf(b64) {
-  const bin = atob(b64);
-  const buf = new Uint8Array(bin.length);
-  for (let i=0;i<bin.length;i++) buf[i] = bin.charCodeAt(i);
-  return buf;
-}
-
-// パスワードで app.enc を復号
-async function decryptApp(password) {
-  const res = await fetch('app.enc', {cache:'no-store'});
-  if (!res.ok) throw new Error('暗号ファイルが見つかりません');
-  const enc = await res.json();
-
-  const salt = b64ToBuf(enc.salt);
-  const iv = b64ToBuf(enc.iv);
-  const data = b64ToBuf(enc.data);
-
-  // PBKDF2で鍵導出
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw', new TextEncoder().encode(password),
-    {name:'PBKDF2'}, false, ['deriveKey']
-  );
-  const key = await crypto.subtle.deriveKey(
-    {name:'PBKDF2', salt, iterations:enc.iter, hash:'SHA-256'},
-    keyMaterial,
-    {name:'AES-GCM', length:256},
-    false, ['decrypt']
-  );
-
-  // AES-GCM復号
-  const decrypted = await crypto.subtle.decrypt(
-    {name:'AES-GCM', iv}, key, data
-  );
-  return new TextDecoder().decode(decrypted);
-}
-
-// 復号したHTMLをページに挿入して実行
-function injectApp(html) {
-  const root = document.getElementById('app-root');
-  // HTMLとscriptを分離
-  const scriptMatch = html.match(/<script>([\s\S]*)<\/script>/);
-  const scriptContent = scriptMatch ? scriptMatch[1] : '';
-  const htmlContent = html.replace(/<script>[\s\S]*<\/script>/, '');
-
-  root.innerHTML = htmlContent;
-
-  // scriptを実行
-  const s = document.createElement('script');
-  s.textContent = scriptContent;
-  document.body.appendChild(s);
-
-  document.getElementById('login-screen').style.display = 'none';
-}
-
-async function doLogin() {
-  const id = document.getElementById('login-id').value.trim();
-  const pw = document.getElementById('login-pw').value.trim();
-  const errEl = document.getElementById('login-error');
-  const btn = document.getElementById('login-btn');
-
-  if (id !== AUTH_ID) {
-    errEl.textContent = 'IDまたはパスワードが違います';
-    document.getElementById('login-pw').value = '';
-    document.getElementById('wrong-img').style.display = 'block';
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = '認証中...';
-  errEl.textContent = '';
-
-  try {
-    const html = await decryptApp(pw);
-    // 復号成功 → セッション保存（パスワードを保持して再ログイン省略）
-    sessionStorage.setItem('mk_pw', pw);
-    injectApp(html);
-  } catch (e) {
-    errEl.textContent = 'IDまたはパスワードが違います';
-    document.getElementById('login-pw').value = '';
-    document.getElementById('wrong-img').style.display = 'block';
-    btn.disabled = false;
-    btn.textContent = 'ログイン';
-  }
-}
-
-// セッション中は自動ログイン
-(async function(){
-  const savedPw = sessionStorage.getItem('mk_pw');
-  if (savedPw) {
+  function loadData() {
     try {
-      const html = await decryptApp(savedPw);
-      injectApp(html);
-    } catch(e) {
-      sessionStorage.removeItem('mk_pw');
+      const raw = localStorage.getItem(STORAGE_KEY);
+      allData = raw ? JSON.parse(raw) : {};
+    } catch (e) { allData = {}; }
+    try {
+      goal = parseInt(localStorage.getItem(GOAL_KEY)) || 0;
+    } catch (e) { goal = 0; }
+    try {
+      const raw = localStorage.getItem(HOLIDAY_KEY);
+      holidays = raw ? JSON.parse(raw) : {};
+    } catch (e) { holidays = {}; }
+    try {
+      const raw = localStorage.getItem(LEAVE_DAYS_KEY);
+      leaveDays = raw !== null ? parseInt(raw) : null;
+    } catch (e) { leaveDays = null; }
+  }
+
+  function saveData() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(allData)); }
+    catch (e) { showToast('保存失敗', true); }
+  }
+
+  function showToast(msg, isError) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.background = isError ? '#A32D2D' : '#0F6E56';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  function getPeriod(offset) {
+    const today = new Date();
+    let baseY = today.getFullYear();
+    let baseM = today.getMonth();
+    if (today.getDate() <= 20) baseM -= 1;
+    baseM += offset;
+    const start = new Date(baseY, baseM, 21);
+    const end = new Date(baseY, baseM + 1, 20);
+    return { start, end };
+  }
+
+  function fmtDate(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function fmtYen(n) {
+    return '¥' + Math.round(n).toLocaleString('ja-JP');
+  }
+
+  function getEntriesInPeriod(offset) {
+    const { start, end } = getPeriod(offset);
+    const startStr = fmtDate(start);
+    const endStr = fmtDate(end);
+    const entries = [];
+    for (const [date, entry] of Object.entries(allData)) {
+      if (date >= startStr && date <= endStr) entries.push({ date, ...entry });
+    }
+    return entries.sort((a,b) => a.date.localeCompare(b.date));
+  }
+
+  function renderSummary() {
+    try {
+    const { start, end } = getPeriod(viewOffset);
+    document.getElementById('period-label').textContent =
+      `${start.getMonth()+1}/${start.getDate()} - ${end.getMonth()+1}/${end.getDate()}`;
+
+    const entries = getEntriesInPeriod(viewOffset);
+    let totalTab = 0, totalJissya = 0, totalJihara = 0, maxPure = 0, totalMinutes = 0, daysWithHours = 0, totalOvertimeMin = 0;
+    let workDays = 0, leaveCount = 0, absenceDays = 0;
+    entries.forEach(e => {
+      if (e.dayType === 'leave') { leaveCount++; return; }
+      if (e.dayType === 'absence') { absenceDays++; return; }
+      // 出勤のみで退勤なしの未完了日は稼働日数にカウントしない
+      const isInProgress = e.startTime && !e.endTime && !(e.tab > 0);
+      if (isInProgress) return;
+      workDays++;
+      totalTab += e.tab || 0;
+      totalJissya += e.jissya || 0;
+      totalJihara += e.jihara || 0;
+      const pure = (e.tab || 0) - (e.jissya || 0);
+      if (pure > maxPure) maxPure = pure;
+      if (e.startTime && e.endTime) {
+        const [sh, sm] = e.startTime.split(':').map(Number);
+        const [eh, em] = e.endTime.split(':').map(Number);
+        let mins = (eh * 60 + em) - (sh * 60 + sm);
+        if (mins < 0) mins += 24 * 60; // 日跨ぎ対応
+        mins += 60; // みなし1時間
+        totalMinutes += mins;
+        daysWithHours++;
+        // 残業: 8時間(480分)を超えた分
+        if (mins > 480) totalOvertimeMin += (mins - 480);
+      }
+    });
+    const totalPureAfterTax = Math.floor((totalTab - totalJissya - totalJihara) / 1.1); // 純売上=(売上-全高速)÷1.1
+
+    // クリーニング累計
+    const cleaningKey = getPeriodKey(viewOffset);
+    const cleaningRecords = cleaningData[cleaningKey] || [];
+    const totalCleaning = cleaningRecords.reduce((sum, r) => sum + r.amount, 0);
+
+    // 洗車累計
+    const carwashRecords = carwashData[cleaningKey] || [];
+    const totalCarwash = carwashRecords.reduce((sum, r) => sum + r.amount, 0);
+
+    // 燃料費累計(売上データから集計)
+    let totalFuel = 0;
+    let totalUberFee = 0;
+    entries.forEach(e => {
+      if (e.fuelDistance > 0) {
+        const rate = e.fuelType === 'ev' ? 15 : 20;
+        totalFuel += Math.round(e.fuelDistance * rate);
+      }
+      if (e.uber > 0) {
+        totalUberFee += Math.round(e.uber * 0.2);
+      }
+    });
+
+    const netAmount = totalPureAfterTax - totalCleaning - totalCarwash - totalFuel - totalUberFee;
+
+    document.getElementById('total-tab').textContent = fmtYen(totalTab);
+    document.getElementById('total-pure').textContent = fmtYen(totalPureAfterTax);
+    document.getElementById('jissya-total').textContent = '-' + fmtYen(totalJissya);
+    document.getElementById('jihara-total').textContent = '-' + fmtYen(totalJihara);
+    document.getElementById('cleaning-summary').textContent = '-' + fmtYen(totalCleaning);
+    document.getElementById('carwash-summary').textContent = '-' + fmtYen(totalCarwash);
+    document.getElementById('fuel-summary').textContent = '-' + fmtYen(totalFuel);
+    document.getElementById('uber-summary').textContent = '-' + fmtYen(totalUberFee);
+    document.getElementById('net-amount').textContent = fmtYen(netAmount);
+    document.getElementById('work-days').textContent = workDays + '日';
+    document.getElementById('remaining-work-days').textContent = Math.max(0, 22 - workDays - leaveCount - absenceDays) + '日';
+    document.getElementById('avg-daily').textContent = workDays > 0 ? fmtYen(totalPureAfterTax / workDays) : '¥0';
+    document.getElementById('max-daily').textContent = fmtYen(maxPure);
+    document.getElementById('remaining-leave').textContent = leaveDays !== null ? leaveDays + '日' : '--';
+
+    // 拘束時間と残業時間
+    const fmtHours = (mins) => {
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      return m > 0 ? `${h}時間${m}分` : `${h}時間`;
+    };
+    document.getElementById('total-work-time').textContent = fmtHours(totalMinutes);
+    document.getElementById('total-overtime').textContent = fmtHours(totalOvertimeMin);
+
+    if (goal > 0) {
+      document.getElementById('goal-card').classList.remove('hidden');
+      const pct = Math.round(totalPureAfterTax / goal * 100);
+      document.getElementById('goal-percent').textContent = pct + '%';
+      document.getElementById('goal-bar').style.width = Math.min(pct, 100) + '%';
+      document.getElementById('goal-bar').style.background = pct >= 100 ? '#1D9E75' : pct >= 70 ? '#C9A961' : '#888';
+      const remaining = goal - totalPureAfterTax;
+      document.getElementById('goal-detail').textContent = remaining > 0
+        ? `あと ${fmtYen(remaining)}`
+        : `達成! 超過 ${fmtYen(-remaining)}`;
+
+      const MONTHLY_WORK_DAYS = 22;
+      const remainingDays = MONTHLY_WORK_DAYS - workDays - leaveCount - absenceDays;
+      const paceEl = document.getElementById('pace-detail');
+      // 稼働日数があれば予想着地を計算(目標達成済みでも表示)
+      if (workDays > 0) {
+        paceEl.style.display = 'block';
+        const avgDaily = totalPureAfterTax / workDays;
+        const actualWorkDays = MONTHLY_WORK_DAYS - leaveCount - absenceDays;
+        const projected = Math.round(avgDaily * actualWorkDays);
+        document.getElementById('projected-total').textContent = fmtYen(projected);
+        if (remaining > 0 && remainingDays > 0) {
+          const dailyRequired = Math.ceil(remaining / remainingDays);
+          document.getElementById('remaining-days').textContent = remainingDays + '日';
+          document.getElementById('daily-required').textContent = fmtYen(dailyRequired);
+        } else {
+          document.getElementById('remaining-days').textContent = remainingDays + '日';
+          document.getElementById('daily-required').textContent = '-';
+        }
+      } else {
+        paceEl.style.display = 'none';
+      }
+    } else {
+      document.getElementById('goal-card').classList.add('hidden');
+    }
+
+    renderChart(entries);
+    } catch(err) {
+      document.getElementById('period-label').textContent = 'エラー: ' + err.message;
+      console.error('renderSummary error:', err);
     }
   }
-})();
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
-}
+  function renderChart(entries) {
+    const ctx = document.getElementById('trend-chart');
+    if (!ctx) return;
+    if (chart) chart.destroy();
+
+    // 有給・欠勤を除外
+    const workEntries = entries.filter(e => e.dayType !== 'leave' && e.dayType !== 'absence');
+
+    const labels = workEntries.map(e => {
+      const d = new Date(e.date);
+      return `${d.getMonth()+1}/${d.getDate()}`;
+    });
+    const data = workEntries.map(e => {
+      return Math.floor(((e.tab || 0) - (e.jissya || 0) - (e.jihara || 0)) / 1.1);
+    });
+
+    const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const textColor = isDark ? '#aaa' : '#5F5E5A';
+    const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+    const barColor = '#C7A545';
+
+    chart = new Chart(ctx, {
+      type: 'bar',
+      data: { labels, datasets: [{ data, backgroundColor: barColor, borderRadius: 4 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: textColor, font: { size: 11 } }, grid: { display: false } },
+          y: { ticks: { color: textColor, font: { size: 11 }, callback: v => '¥' + (v/1000) + 'k' }, grid: { color: gridColor } }
+        }
+      }
+    });
+  }
+
+  function renderCalendar() {
+    const { start, end } = getPeriod(viewOffset);
+    const label = `${start.getMonth()+1}/${start.getDate()} - ${end.getMonth()+1}/${end.getDate()}`;
+    document.getElementById('cal-period-label').textContent = label;
+
+    // 期間内のデータをマップ化
+    const entries = getEntriesInPeriod(viewOffset);
+    const dataMap = {};
+    let calTotal = 0;
+    entries.forEach(e => {
+      const pureAfterTax = Math.floor(((e.tab||0) - (e.jissya||0) - (e.jihara||0)) / 1.1);
+      dataMap[e.date] = { amount: pureAfterTax, dayType: e.dayType || '' };
+      if (!e.dayType) calTotal += pureAfterTax;
+    });
+    document.getElementById('cal-total').textContent = fmtYen(calTotal);
+
+    const today = fmtDate(new Date());
+
+    // 締め期間の全日付を生成(21日〜翌20日)
+    const days = [];
+    const cur = new Date(start);
+    while (cur <= end) {
+      days.push(fmtDate(new Date(cur)));
+      cur.setDate(cur.getDate() + 1);
+    }
+
+    // 公休日数カウント(期間内)
+    const holidayCount = days.filter(d => holidays[d]).length;
+    document.getElementById('cal-holiday-count').textContent = holidayCount + '日';
+
+    const grid = document.getElementById('cal-grid');
+
+    // 最初の日の曜日に合わせて空白セルを追加
+    const firstDow = new Date(days[0]).getDay();
+    let html = '';
+    for (let i = 0; i < firstDow; i++) {
+      html += '<div class="cal-cell cal-empty"></div>';
+    }
+
+    days.forEach(date => {
+      const d = new Date(date);
+      const day = d.getDate();
+      const dow = d.getDay();
+      const data = dataMap[date];
+      const isToday = date === today;
+      const isHoliday = holidays[date] === true;
+
+      let cellClass = 'cal-cell';
+      if (isHoliday) cellClass += ' holiday';
+      if (data && data.dayType === 'leave') cellClass += ' is-leave';
+      else if (data && data.dayType === 'absence') cellClass += ' is-absence';
+      else if (isToday) cellClass += ' today';
+      else if (data && !isHoliday) cellClass += ' has-data';
+
+      let dayColor = '#e8e8e8';
+      if (dow === 0) dayColor = '#E05C5C';
+      else if (dow === 6) dayColor = '#7ab3e0';
+
+      let content = '';
+      if (isHoliday) {
+        content = `<span class="cal-holiday">公休</span>`;
+      } else if (data) {
+        if (data.dayType === 'leave') {
+          content = `<span class="cal-leave">有給</span>`;
+        } else if (data.dayType === 'absence') {
+          content = `<span class="cal-absence">欠勤</span>`;
+        } else if (data.amount !== 0) {
+          const amt = data.amount >= 10000
+            ? (data.amount / 10000).toFixed(1) + '万'
+            : data.amount >= 1000
+              ? (data.amount / 1000).toFixed(0) + '千'
+              : data.amount;
+          content = `<span class="cal-amount">${amt}</span>`;
+        }
+      }
+
+      html += `<div class="${cellClass}" data-date="${date}" style="cursor:pointer;">
+        <span class="cal-day" style="color:${dayColor};">${day}</span>
+        ${content}
+      </div>`;
+    });
+
+    grid.innerHTML = html;
+
+    // タップで公休日トグル
+    grid.querySelectorAll('.cal-cell[data-date]').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const date = cell.getAttribute('data-date');
+        if (holidays[date]) {
+          delete holidays[date];
+        } else {
+          holidays[date] = true;
+        }
+        localStorage.setItem(HOLIDAY_KEY, JSON.stringify(holidays));
+        renderCalendar();
+      });
+    });
+  }
+
+  function renderList() {
+    // カレンダー描画
+    renderCalendar();
+
+    const container = document.getElementById('list-container');
+    const entries = getEntriesInPeriod(viewOffset).slice().reverse();
+    if (entries.length === 0) {
+      container.innerHTML = '<p style="text-align: center; color: #888; font-size: 13px; padding: 2rem 0;">この期間のデータはまだありません</p>';
+      return;
+    }
+    container.innerHTML = entries.map(e => {
+      const d = new Date(e.date);
+      const wd = ['日','月','火','水','木','金','土'][d.getDay()];
+      
+      // 有給・欠勤の場合は専用表示
+      if (e.dayType === 'leave' || e.dayType === 'absence') {
+        const label = e.dayType === 'leave' ? '有給' : '欠勤';
+        const color = e.dayType === 'leave' ? '#1D9E75' : '#E05C5C';
+        return `<div class="entry-row">
+          <div class="row" style="margin-bottom: 4px;">
+            <span style="font-weight: 500;">${e.date.slice(5)} (${wd})</span>
+            <span style="font-size: 14px; font-weight: 500; color: ${color};">${label}</span>
+          </div>
+          <button class="del-btn" data-date="${e.date}" style="margin-top: 4px;">削除</button>
+        </div>`;
+      }
+
+      const jissya = e.jissya || 0;
+      const jihara = e.jihara || 0;
+      const pureAfterTax = Math.floor(((e.tab||0) - jissya - jihara) / 1.1);
+
+      // 勤務時間・残業
+      let workLine = '';
+      let overtimeLine = '';
+      if (e.startTime && e.endTime) {
+        const [sh, sm] = e.startTime.split(':').map(Number);
+        const [eh, em] = e.endTime.split(':').map(Number);
+        let mins = (eh * 60 + em) - (sh * 60 + sm);
+        if (mins < 0) mins += 24 * 60;
+        mins += 60; // みなし1時間
+        const h = Math.floor(mins / 60);
+        const m = mins % 60;
+        workLine = `${e.startTime}〜${e.endTime}　勤務 ${h}h${m > 0 ? m + 'm' : ''}`;
+        if (mins > 480) {
+          const otMins = mins - 480;
+          const otH = Math.floor(otMins / 60);
+          const otM = otMins % 60;
+          overtimeLine = `残業 ${otH > 0 ? otH + 'h' : ''}${otM > 0 ? otM + 'm' : ''}`;
+        }
+      }
+
+      // 燃料費
+      let fuelLine = '';
+      if (e.fuelDistance > 0) {
+        const rate = e.fuelType === 'ev' ? 15 : 20;
+        const fuelAmt = Math.round(e.fuelDistance * rate);
+        const carLabel = e.fuelType === 'ev' ? '電気自動車' : 'ガソリン車';
+        fuelLine = `燃料費 -${fmtYen(fuelAmt)}　(${e.fuelDistance}km / ${carLabel})`;
+      }
+
+      // その日のクリーニング
+      const periodKey = getPeriodKey(viewOffset);
+      const cleanRecs = (cleaningData[periodKey] || []).filter(r => r.date === e.date);
+      const cleanAmt = cleanRecs.reduce((s, r) => s + r.amount, 0);
+
+      // その日の洗車
+      const carwashRecs = (carwashData[periodKey] || []).filter(r => r.date === e.date);
+      const carwashAmt = carwashRecs.reduce((s, r) => s + r.amount, 0);
+
+      return `<div class="entry-row">
+        <div class="row" style="margin-bottom: 6px;">
+          <span style="font-weight: 500;">${e.date.slice(5)} (${wd})</span>
+          <span style="font-size: 16px; font-weight: 500; color: #C7A545;">${fmtYen(pureAfterTax)}</span>
+        </div>
+        <div style="font-size: 11px; color: #aaa; display:flex; flex-direction:column; gap:3px; margin-bottom:4px;">
+          <div>売上(タブ) ${fmtYen(e.tab||0)}</div>
+          ${jissya > 0 ? `<div style="color:#C7A545;">実車高速 -${fmtYen(jissya)}</div>` : ''}
+          ${jihara > 0 ? `<div style="color:#E05C5C;">空車高速 -${fmtYen(jihara)}</div>` : ''}
+          ${fuelLine ? `<div style="color:#7ab3e0;">${fuelLine}</div>` : ''}
+          ${cleanAmt > 0 ? `<div style="color:#aaa;">クリーニング -${fmtYen(cleanAmt)}</div>` : ''}
+          ${carwashAmt > 0 ? `<div style="color:#aaa;">洗車 -${fmtYen(carwashAmt)}</div>` : ''}
+        </div>
+        ${workLine ? `<div style="font-size: 11px; color: #777;">${workLine}${overtimeLine ? `　<span style="color:#C7A545;">${overtimeLine}</span>` : ''}</div>` : ''}
+        <button class="del-btn" data-date="${e.date}" style="margin-top: 8px;">削除</button>
+      </div>`;
+    }).join('');
+    container.querySelectorAll('.del-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const date = btn.getAttribute('data-date');
+        if (confirm(`${date} のデータを削除?`)) {
+          delete allData[date];
+          saveData();
+          renderList();
+          renderSummary();
+        }
+      });
+    });
+  }
+
+  function clearInputs() {
+    document.getElementById('quick-tab').value = '';
+    jissyaItems = [];
+    jiharaItems = [];
+    renderHighwayList(jissyaItems, 'jissya-list', 'jissya-total-preview', 'quick-jissya');
+    renderHighwayList(jiharaItems, 'jihara-list', 'jihara-total-preview', 'quick-jihara');
+    document.getElementById('jissya-input').value = '';
+    document.getElementById('jihara-input').value = '';
+    // アコーディオンを閉じる
+    document.getElementById('jissya-form').style.display = 'none';
+    document.getElementById('jissya-arrow').textContent = '▶';
+    document.getElementById('jihara-form').style.display = 'none';
+    document.getElementById('jihara-arrow').textContent = '▶';
+    // 燃料費リセット
+    document.getElementById('quick-meter-start').value = '';
+    document.getElementById('quick-meter-end').value = '';
+    document.getElementById('quick-fuel-distance').value = '0';
+    document.getElementById('quick-fuel-type').value = 'gasoline';
+    document.querySelector('input[name="fuel-type"][value="gasoline"]').checked = true;
+    document.getElementById('fuel-distance-display').textContent = '0km';
+    document.getElementById('fuel-calc').textContent = '¥0';
+    document.getElementById('fuel-total-preview').textContent = 'メーター未入力';
+    document.getElementById('fuel-total-preview').style.color = '#777';
+    document.getElementById('fuel-form').style.display = 'none';
+    document.getElementById('fuel-arrow').textContent = '▶';
+    document.getElementById('quick-start').value = '';
+    document.getElementById('quick-end').value = '';
+    document.getElementById('work-hours-preview').textContent = '';
+  }
+
+  function loadQuickInput() {
+    const date = document.getElementById('quick-date').value;
+    const existing = allData[date];
+    if (existing) {
+      document.getElementById('quick-tab').value = existing.tab || '';
+      document.getElementById('quick-start').value = existing.startTime || '';
+      document.getElementById('quick-end').value = existing.endTime || '';
+      jissyaItems = Array.isArray(existing.jissyaItems) ? [...existing.jissyaItems]
+        : (existing.jissya > 0 ? [existing.jissya] : []);
+      jiharaItems = Array.isArray(existing.jiharaItems) ? [...existing.jiharaItems]
+        : (existing.jihara > 0 ? [existing.jihara] : []);
+      renderHighwayList(jissyaItems, 'jissya-list', 'jissya-total-preview', 'quick-jissya');
+      // メーター値の復元
+      document.getElementById('quick-meter-start').value = existing.meterStart || '';
+      document.getElementById('quick-meter-end').value = existing.meterEnd || '';
+      // 車種を常に復元(fuelDistanceが0でも)
+      const ft = existing.fuelType || 'gasoline';
+      document.querySelector(`input[name="fuel-type"][value="${ft}"]`).checked = true;
+      document.getElementById('quick-fuel-type').value = ft;
+      // 燃料費の計算更新
+      updateFuelCalc();
+      updateWorkHoursPreview();
+    } else {
+      clearInputs();
+    }
+    const msg = document.getElementById('quick-msg');
+    msg.textContent = existing ? '記録済み' : '';
+    msg.className = existing ? 'text-success' : 'text-secondary';
+  }
+
+  function switchTab(tab) {
+    ['summary','list','expense','settings'].forEach(t => {
+      const btn = document.getElementById('tab-'+t);
+      const view = document.getElementById('view-'+t);
+      if (t === tab) {
+        btn.classList.add('tab-active');
+        view.classList.remove('hidden');
+      } else {
+        btn.classList.remove('tab-active');
+        view.classList.add('hidden');
+      }
+    });
+    if (tab === 'summary') {
+      // 日付を常に当日にリセット
+      document.getElementById('quick-date').value = fmtDate(new Date());
+      loadQuickInput();
+      renderSummary();
+    }
+    if (tab === 'list') renderList();
+    if (tab === 'expense') renderExpense();
+    if (tab === 'settings') {
+      // 有給日数を入力欄に反映
+      document.getElementById('input-leave-days').value = leaveDays !== null ? leaveDays : '';
+    }
+  }
+
+  document.getElementById('tab-summary').addEventListener('click', () => switchTab('summary'));
+  document.getElementById('tab-list').addEventListener('click', () => switchTab('list'));
+  document.getElementById('tab-expense').addEventListener('click', () => switchTab('expense'));
+  document.getElementById('tab-settings').addEventListener('click', () => switchTab('settings'));
+
+  // ---- 経費タブ: クリーニング ----
+  const CLEANING_KEY = 'mk_cleaning_data';
+  const CLEANING_ITEMS = [
+    { name: 'Yシャツ', price: 180 },
+    { name: 'ジャケット', price: 525 },
+    { name: 'スラックス', price: 405 },
+    { name: 'ネクタイ', price: 310 },
+  ];
+  let cleaningData = {};
+  let carwashData = {};
+  let gasData = {};
+
+  function saveGasData() {
+    try { localStorage.setItem(GAS_KEY, JSON.stringify(gasData)); } catch(e) {}
+  }
+  function loadGasData() {
+    try {
+      const raw = localStorage.getItem(GAS_KEY);
+      gasData = raw ? JSON.parse(raw) : {};
+    } catch(e) { gasData = {}; }
+  }
+  let carwashPrices = { 'タムラ': 0, 'PCW': 0, '新橋': 0 };
+  let expOffset = 0;
+  let cleaningCounts = CLEANING_ITEMS.map(() => 0);
+
+  function loadCleaningData() {
+    try {
+      const raw = localStorage.getItem(CLEANING_KEY);
+      cleaningData = raw ? JSON.parse(raw) : {};
+    } catch(e) { cleaningData = {}; }
+  }
+
+  function saveCleaningData() {
+    try { localStorage.setItem(CLEANING_KEY, JSON.stringify(cleaningData)); }
+    catch(e) { showToast('保存失敗', true); }
+  }
+
+  function getPeriodKey(offset) {
+    const { start } = getPeriod(offset);
+    return start.getFullYear() + '-' + String(start.getMonth()+1).padStart(2,'0');
+  }
+
+  function updateCleaningSubtotal() {
+    const total = CLEANING_ITEMS.reduce((sum, item, i) => sum + item.price * cleaningCounts[i], 0);
+    document.getElementById('cleaning-subtotal').textContent = fmtYen(total);
+  }
+
+  function renderExpense() {
+    const { start, end } = getPeriod(expOffset);
+    document.getElementById('exp-period-label').textContent =
+      `${start.getMonth()+1}/${start.getDate()} - ${end.getMonth()+1}/${end.getDate()}`;
+
+    // カウンターUI
+    const container = document.getElementById('cleaning-items');
+    container.innerHTML = CLEANING_ITEMS.map((item, i) => `
+      <div class="row" style="margin-bottom: 10px;">
+        <div>
+          <span style="font-size: 14px;">${item.name}</span>
+          <span class="text-tertiary" style="margin-left: 6px;">¥${item.price.toLocaleString()}</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button class="cnt-btn cnt-minus" data-idx="${i}" style="width:32px;height:32px;border-radius:50%;padding:0;font-size:18px;line-height:1;">−</button>
+          <span class="cnt-val" data-idx="${i}" style="font-size: 16px; font-weight: 500; min-width: 20px; text-align: center;">${cleaningCounts[i]}</span>
+          <button class="cnt-btn cnt-plus" data-idx="${i}" style="width:32px;height:32px;border-radius:50%;padding:0;font-size:18px;line-height:1;">＋</button>
+        </div>
+      </div>
+    `).join('');
+
+    container.querySelectorAll('.cnt-plus').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const i = parseInt(btn.getAttribute('data-idx'));
+        cleaningCounts[i]++;
+        container.querySelector(`.cnt-val[data-idx="${i}"]`).textContent = cleaningCounts[i];
+        updateCleaningSubtotal();
+      });
+    });
+    container.querySelectorAll('.cnt-minus').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const i = parseInt(btn.getAttribute('data-idx'));
+        if (cleaningCounts[i] > 0) {
+          cleaningCounts[i]--;
+          container.querySelector(`.cnt-val[data-idx="${i}"]`).textContent = cleaningCounts[i];
+          updateCleaningSubtotal();
+        }
+      });
+    });
+
+    updateCleaningSubtotal();
+
+    // 履歴と累計
+    const key = getPeriodKey(expOffset);
+    const records = cleaningData[key] || [];
+    const total = records.reduce((sum, r) => sum + r.amount, 0);
+    document.getElementById('cleaning-total').textContent = fmtYen(total);
+
+    const histContainer = document.getElementById('cleaning-history-container');
+    if (records.length === 0) {
+      histContainer.innerHTML = '<p style="text-align:center;color:#888;font-size:13px;padding:1rem 0;">この期間のクリーニング記録はまだありません</p>';
+    } else {
+      histContainer.innerHTML = '<p style="font-size:12px;color:#aaa;margin-bottom:8px;">記録履歴</p>' +
+        records.map((r, idx) => `
+          <div class="entry-row" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;">
+            <div>
+              <span style="font-size:13px;">${r.date}</span>
+              <span style="font-size:11px;color:#777;margin-left:6px;">${r.detail}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:15px;font-weight:500;color:#C7A545;">${fmtYen(r.amount)}</span>
+              <button class="hist-del" data-key="${key}" data-idx="${idx}" style="background:transparent;border:none;color:#A32D2D;font-size:12px;padding:2px 6px;">削除</button>
+            </div>
+          </div>
+        `).join('');
+      histContainer.querySelectorAll('.hist-del').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const k = btn.getAttribute('data-key');
+          const idx = parseInt(btn.getAttribute('data-idx'));
+          if (confirm('この記録を削除?')) {
+            cleaningData[k].splice(idx, 1);
+            saveCleaningData();
+            renderExpense();
+          }
+        });
+      });
+    }
+
+    // 洗車履歴
+    renderCarwashHistory();
+    // ガソリン履歴
+    renderGasHistory();
+  }
+
+  document.getElementById('cleaning-add-btn').addEventListener('click', () => {
+    const total = CLEANING_ITEMS.reduce((sum, item, i) => sum + item.price * cleaningCounts[i], 0);
+    if (total === 0) { showToast('品目を選んでください', true); return; }
+    const key = getPeriodKey(expOffset);
+    const detail = CLEANING_ITEMS.map((item, i) => cleaningCounts[i] > 0 ? `${item.name}×${cleaningCounts[i]}` : '').filter(Boolean).join(' ');
+    const dateVal = document.getElementById('cleaning-date').value || fmtDate(new Date());
+    const record = { date: dateVal, amount: total, detail };
+    if (!cleaningData[key]) cleaningData[key] = [];
+    cleaningData[key].push(record);
+    saveCleaningData();
+    cleaningCounts = CLEANING_ITEMS.map(() => 0);
+    const form = document.getElementById('cleaning-form');
+    const arrow = document.getElementById('cleaning-arrow');
+    form.style.display = 'none';
+    arrow.textContent = '▶';
+    showToast(`¥${total.toLocaleString()} を追加しました`);
+    renderExpense();
+  });
+
+  document.getElementById('exp-prev-period').addEventListener('click', () => { expOffset--; renderExpense(); });
+  document.getElementById('exp-next-period').addEventListener('click', () => { expOffset++; renderExpense(); });
+
+  // クリーニングアコーディオントグル
+  document.getElementById('cleaning-toggle').addEventListener('click', () => {
+    const form = document.getElementById('cleaning-form');
+    const arrow = document.getElementById('cleaning-arrow');
+    const isOpen = form.style.display !== 'none';
+    form.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent = isOpen ? '▶' : '▼';
+    if (!isOpen) {
+      document.getElementById('cleaning-date').value = fmtDate(new Date());
+      renderExpense();
+    }
+  });
+
+  // クリーニング履歴アコーディオントグル
+  document.getElementById('cleaning-hist-toggle').addEventListener('click', () => {
+    const container = document.getElementById('cleaning-history-container');
+    const arrow = document.getElementById('cleaning-hist-arrow');
+    const isOpen = container.style.display !== 'none';
+    container.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent = isOpen ? '▶' : '▼';
+  });
+
+  loadCleaningData();
+
+  // ---- 洗車 ----
+  const CARWASH_KEY = 'mk_carwash_data';
+  const CARWASH_PRICE_KEY = 'mk_carwash_prices';
+  const CARWASH_SHOPS = ['タムラ', 'PCW', '新橋'];
+  // carwashData/carwashPricesは上部で宣言済み
+  function loadCarwashData() {
+    try {
+      const raw = localStorage.getItem(CARWASH_KEY);
+      carwashData = raw ? JSON.parse(raw) : {};
+    } catch(e) { carwashData = {}; }
+    try {
+      const raw = localStorage.getItem(CARWASH_PRICE_KEY);
+      if (raw) carwashPrices = JSON.parse(raw);
+    } catch(e) {}
+  }
+
+  function saveCarwashData() {
+    try { localStorage.setItem(CARWASH_KEY, JSON.stringify(carwashData)); }
+    catch(e) { showToast('保存失敗', true); }
+  }
+
+  function renderCarwashForm() {
+    const btns = document.getElementById('carwash-buttons');
+    btns.innerHTML = CARWASH_SHOPS.map(shop => {
+      const price = carwashPrices[shop] || 0;
+      const isMenuShop = (shop === '新橋' || shop === 'タムラ' || shop === 'PCW');
+      const priceText = isMenuShop ? 'メニューで選択' : (price > 0 ? fmtYen(price) : '未設定');
+      const disabled = (!isMenuShop && price === 0) ? 'style="opacity:0.4;"' : '';
+      return `<button class="carwash-shop-btn" data-shop="${shop}" data-price="${price}"
+        style="padding:12px;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;font-size:14px;display:flex;justify-content:space-between;align-items:center;" ${disabled}>
+        <span>${shop}</span>
+        <span style="color:#C7A545;font-weight:500;">${priceText}</span>
+      </button>`;
+    }).join('');
+
+    btns.querySelectorAll('.carwash-shop-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const shop = btn.getAttribute('data-shop');
+        const price = parseInt(btn.getAttribute('data-price')) || 0;
+        if (shop === '新橋') {
+          // 新橋はステップ2へ
+          document.getElementById('cw-step1').style.display = 'none';
+          document.getElementById('cw-step2').style.display = 'block';
+        } else if (shop === 'タムラ') {
+          // タムラはステップ4へ
+          document.getElementById('cw-step1').style.display = 'none';
+          document.getElementById('cw-step4').style.display = 'block';
+        } else if (shop === 'PCW') {
+          // PCWはステップ6へ
+          document.getElementById('cw-step1').style.display = 'none';
+          document.getElementById('cw-step6').style.display = 'block';
+        } else {
+          if (price === 0) { showToast('設定から料金を設定してください', true); return; }
+          if (!confirm(`${shop} / ${fmtYen(price)} を記録しますか?`)) return;
+          saveCwRecord(shop, price, shop);
+        }
+      });
+    });
+
+    const note = document.getElementById('carwash-price-note');
+    const hasUnset = CARWASH_SHOPS.filter(s => s !== '新橋' && s !== 'タムラ').some(s => !carwashPrices[s]);
+    note.textContent = hasUnset ? '※ 未設定の洗車屋は設定タブから料金を登録してください' : '';
+  }
+
+  // 新橋ステップ2: 車種選択
+  let cwSelectedMenu = '';
+  let cwSelectedPrice = 0;
+  let cwFullWash = false;
+
+  document.querySelectorAll('.cw-menu-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      cwSelectedMenu = btn.getAttribute('data-menu');
+      cwSelectedPrice = parseInt(btn.getAttribute('data-price')) || 0;
+      cwFullWash = false;
+      // フルトグルリセット
+      document.getElementById('cw-full-toggle').style.background = '#444';
+      document.getElementById('cw-full-knob').style.left = '3px';
+      document.getElementById('cw-opt-a').checked = false;
+      document.getElementById('cw-opt-b').checked = false;
+      document.getElementById('cw-opt-c').checked = false;
+      document.getElementById('cw-selected-menu').textContent = `${cwSelectedMenu} ¥${cwSelectedPrice.toLocaleString()}`;
+      updateCwTotal();
+      document.getElementById('cw-step2').style.display = 'none';
+      document.getElementById('cw-step3').style.display = 'block';
+    });
+  });
+
+  // フル洗車トグル
+  document.getElementById('cw-full-toggle').addEventListener('click', () => {
+    cwFullWash = !cwFullWash;
+    const btn = document.getElementById('cw-full-toggle');
+    const knob = document.getElementById('cw-full-knob');
+    btn.style.background = cwFullWash ? '#C7A545' : '#444';
+    knob.style.left = cwFullWash ? '21px' : '3px';
+    updateCwTotal();
+  });
+
+  // オプションチェック
+  ['cw-opt-a','cw-opt-b','cw-opt-c'].forEach(id => {
+    document.getElementById(id).addEventListener('change', updateCwTotal);
+  });
+
+  function updateCwTotal() {
+    let total = cwSelectedPrice;
+    if (cwFullWash) total += 1000;
+    if (document.getElementById('cw-opt-a').checked) total += 200;
+    if (document.getElementById('cw-opt-b').checked) total += 400;
+    if (document.getElementById('cw-opt-c').checked) total += 300;
+    document.getElementById('cw-total-display').textContent = fmtYen(total);
+    return total;
+  }
+
+  // 戻るボタン
+  document.getElementById('cw-back').addEventListener('click', () => {
+    document.getElementById('cw-step2').style.display = 'none';
+    document.getElementById('cw-step1').style.display = 'block';
+  });
+  document.getElementById('cw-back2').addEventListener('click', () => {
+    document.getElementById('cw-step3').style.display = 'none';
+    document.getElementById('cw-step2').style.display = 'block';
+  });
+
+  // 新橋記録ボタン
+  document.getElementById('cw-shinbashi-save').addEventListener('click', () => {
+    const total = updateCwTotal();
+    const opts = [];
+    if (cwFullWash) opts.push('フル');
+    if (document.getElementById('cw-opt-a').checked) opts.push('撥水');
+    if (document.getElementById('cw-opt-b').checked) opts.push('タイヤB');
+    if (document.getElementById('cw-opt-c').checked) opts.push('タイヤC');
+    const detail = `新橋/${cwSelectedMenu}${opts.length > 0 ? '+'+opts.join('/') : ''}`;
+    saveCwRecord('新橋', total, detail);
+  });
+
+  function saveCwRecord(shop, amount, detail) {
+    const key = getPeriodKey(expOffset);
+    if (!carwashData[key]) carwashData[key] = [];
+    const dateVal = document.getElementById('carwash-date').value || fmtDate(new Date());
+    carwashData[key].push({ date: dateVal, shop, amount, detail });
+    saveCarwashData();
+    // フォームを閉じてリセット
+    document.getElementById('carwash-form').style.display = 'none';
+    document.getElementById('carwash-arrow').textContent = '▶';
+    document.getElementById('cw-step1').style.display = 'block';
+    document.getElementById('cw-step2').style.display = 'none';
+    document.getElementById('cw-step3').style.display = 'none';
+    document.getElementById('cw-step4').style.display = 'none';
+    document.getElementById('cw-step5').style.display = 'none';
+    document.getElementById('cw-step6').style.display = 'none';
+    document.getElementById('cw-step7').style.display = 'none';
+    showToast(`${shop} ${fmtYen(amount)} を記録しました`);
+    renderExpense();
+    renderSummary();
+  }
+
+  // ---- タムラ専用 ----
+  let cwTamuraMenu = '';
+  let cwTamuraPrice = 0;
+
+  document.querySelectorAll('.cw-tamura-menu-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      cwTamuraMenu = btn.getAttribute('data-menu');
+      cwTamuraPrice = parseInt(btn.getAttribute('data-price')) || 0;
+      // リセット
+      document.querySelector('input[name="cw-tamura-clean"][value="none"]').checked = true;
+      document.getElementById('cw-tamura-tire').checked = false;
+      document.getElementById('cw-tamura-hinge').checked = false;
+      document.getElementById('cw-tamura-selected-menu').textContent = `${cwTamuraMenu} ¥${cwTamuraPrice.toLocaleString()}`;
+      updateCwTamuraTotal();
+      document.getElementById('cw-step4').style.display = 'none';
+      document.getElementById('cw-step5').style.display = 'block';
+    });
+  });
+
+  document.querySelectorAll('input[name="cw-tamura-clean"]').forEach(r => {
+    r.addEventListener('change', updateCwTamuraTotal);
+  });
+  document.getElementById('cw-tamura-tire').addEventListener('change', updateCwTamuraTotal);
+  document.getElementById('cw-tamura-hinge').addEventListener('change', updateCwTamuraTotal);
+
+  function updateCwTamuraTotal() {
+    let total = cwTamuraPrice;
+    const cleanRadio = document.querySelector('input[name="cw-tamura-clean"]:checked');
+    if (cleanRadio) total += parseInt(cleanRadio.getAttribute('data-price')) || 0;
+    if (document.getElementById('cw-tamura-tire').checked) total += 500;
+    if (document.getElementById('cw-tamura-hinge').checked) total += 400;
+    document.getElementById('cw-tamura-total-display').textContent = fmtYen(total);
+    return total;
+  }
+
+  document.getElementById('cw-back-tamura').addEventListener('click', () => {
+    document.getElementById('cw-step4').style.display = 'none';
+    document.getElementById('cw-step1').style.display = 'block';
+  });
+  document.getElementById('cw-back-tamura2').addEventListener('click', () => {
+    document.getElementById('cw-step5').style.display = 'none';
+    document.getElementById('cw-step4').style.display = 'block';
+  });
+
+  document.getElementById('cw-tamura-save').addEventListener('click', () => {
+    const total = updateCwTamuraTotal();
+    const opts = [];
+    const cleanRadio = document.querySelector('input[name="cw-tamura-clean"]:checked');
+    const cleanVal = cleanRadio ? cleanRadio.value : 'none';
+    if (cleanVal === 'A') opts.push('車内A');
+    else if (cleanVal === 'B') opts.push('車内B');
+    if (document.getElementById('cw-tamura-tire').checked) opts.push('タイヤH');
+    if (document.getElementById('cw-tamura-hinge').checked) opts.push('ヒンジ');
+    const detail = `タムラ/${cwTamuraMenu}${opts.length > 0 ? '+'+opts.join('/') : ''}`;
+    saveCwRecord('タムラ', total, detail);
+  });
+
+  // ---- PCW専用 ----
+  let cwPcwMenu = '';
+  let cwPcwPrice = 0;
+
+  document.querySelectorAll('.cw-pcw-menu-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      cwPcwMenu = btn.getAttribute('data-menu');
+      cwPcwPrice = parseInt(btn.getAttribute('data-price')) || 0;
+      document.querySelector('input[name="cw-pcw-clean"][value="none"]').checked = true;
+      document.getElementById('cw-pcw-tire').checked = false;
+      document.getElementById('cw-pcw-hinge').checked = false;
+      document.getElementById('cw-pcw-selected-menu').textContent = `${cwPcwMenu} ¥${cwPcwPrice.toLocaleString()}`;
+      updateCwPcwTotal();
+      document.getElementById('cw-step6').style.display = 'none';
+      document.getElementById('cw-step7').style.display = 'block';
+    });
+  });
+
+  document.querySelectorAll('input[name="cw-pcw-clean"]').forEach(r => {
+    r.addEventListener('change', updateCwPcwTotal);
+  });
+  document.getElementById('cw-pcw-tire').addEventListener('change', updateCwPcwTotal);
+  document.getElementById('cw-pcw-hinge').addEventListener('change', updateCwPcwTotal);
+
+  function updateCwPcwTotal() {
+    let total = cwPcwPrice;
+    const cleanRadio = document.querySelector('input[name="cw-pcw-clean"]:checked');
+    if (cleanRadio) total += parseInt(cleanRadio.getAttribute('data-price')) || 0;
+    if (document.getElementById('cw-pcw-tire').checked) total += 500;
+    if (document.getElementById('cw-pcw-hinge').checked) total += 400;
+    document.getElementById('cw-pcw-total-display').textContent = fmtYen(total);
+    return total;
+  }
+
+  document.getElementById('cw-back-pcw').addEventListener('click', () => {
+    document.getElementById('cw-step6').style.display = 'none';
+    document.getElementById('cw-step1').style.display = 'block';
+  });
+  document.getElementById('cw-back-pcw2').addEventListener('click', () => {
+    document.getElementById('cw-step7').style.display = 'none';
+    document.getElementById('cw-step6').style.display = 'block';
+  });
+
+  document.getElementById('cw-pcw-save').addEventListener('click', () => {
+    const total = updateCwPcwTotal();
+    const opts = [];
+    const cleanRadio = document.querySelector('input[name="cw-pcw-clean"]:checked');
+    const cleanVal = cleanRadio ? cleanRadio.value : 'none';
+    if (cleanVal === 'A') opts.push('車内A');
+    else if (cleanVal === 'B') opts.push('車内B');
+    if (document.getElementById('cw-pcw-tire').checked) opts.push('タイヤH');
+    if (document.getElementById('cw-pcw-hinge').checked) opts.push('ヒンジ');
+    const detail = `PCW/${cwPcwMenu}${opts.length > 0 ? '+'+opts.join('/') : ''}`;
+    saveCwRecord('PCW', total, detail);
+  });
+
+  function renderCarwashHistory() {
+    const key = getPeriodKey(expOffset);
+    const records = carwashData[key] || [];
+    const total = records.reduce((sum, r) => sum + r.amount, 0);
+    document.getElementById('carwash-total').textContent = fmtYen(total);
+
+    const container = document.getElementById('carwash-history-container');
+    if (records.length === 0) {
+      container.innerHTML = '<p style="text-align:center;color:#888;font-size:13px;padding:0.5rem 0 1rem;">この期間の洗車記録はまだありません</p>';
+    } else {
+      container.innerHTML = '<p style="font-size:12px;color:#aaa;margin-bottom:8px;">記録履歴</p>' +
+        records.map((r, idx) => `
+          <div class="entry-row" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;">
+            <div>
+              <span style="font-size:13px;">${r.date}</span>
+              <span style="font-size:11px;color:#777;margin-left:6px;">${r.shop}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:15px;font-weight:500;color:#C7A545;">${fmtYen(r.amount)}</span>
+              <button class="carwash-del" data-key="${key}" data-idx="${idx}" style="background:transparent;border:none;color:#A32D2D;font-size:12px;padding:2px 6px;">削除</button>
+            </div>
+          </div>
+        `).join('');
+      container.querySelectorAll('.carwash-del').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const k = btn.getAttribute('data-key');
+          const idx = parseInt(btn.getAttribute('data-idx'));
+          if (confirm('この記録を削除?')) {
+            carwashData[k].splice(idx, 1);
+            saveCarwashData();
+            renderCarwashHistory();
+            renderSummary();
+          }
+        });
+      });
+    }
+  }  // renderCarwashHistory終了
+
+  function renderGasHistory() {
+    // 売上データ(allData)から燃料費を集計
+    const { start, end } = getPeriod(expOffset);
+    const gasRecords = [];
+    Object.entries(allData).forEach(([date, e]) => {
+      if (!e.fuelDistance || e.fuelDistance <= 0) return;
+      const d = new Date(date);
+      if (d < start || d > end) return;
+      const rate = e.fuelType === 'ev' ? 15 : 20;
+      const amount = Math.round(e.fuelDistance * rate);
+      gasRecords.push({ date, type: e.fuelType || 'gasoline', distance: e.fuelDistance, rate, amount });
+    });
+    gasRecords.sort((a,b) => a.date.localeCompare(b.date));
+    const gasTotal = gasRecords.reduce((s, r) => s + r.amount, 0);
+    document.getElementById('gas-total').textContent = fmtYen(gasTotal);
+
+    const gasContainer = document.getElementById('gas-history-container');
+    if (gasRecords.length === 0) {
+      gasContainer.innerHTML = '<p style="text-align:center;color:#888;font-size:13px;padding:0.5rem 0 1rem;">この期間の燃料費記録はまだありません</p>';
+    } else {
+      gasContainer.innerHTML = '<p style="font-size:12px;color:#aaa;margin-bottom:8px;">記録履歴</p>' +
+        gasRecords.map(r => `
+          <div class="entry-row" style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;">
+            <div>
+              <span style="font-size:13px;">${r.date}</span>
+              <span style="font-size:11px;color:#777;margin-left:6px;">${r.distance}km / ${r.type === 'ev' ? '電気自動車' : 'ガソリン車'}</span>
+            </div>
+            <span style="font-size:15px;font-weight:500;color:#C7A545;">${fmtYen(r.amount)}</span>
+          </div>
+        `).join('');
+    }
+  }
+
+  document.getElementById('gas-toggle').addEventListener('click', () => {
+    const form = document.getElementById('gas-form');
+    const arrow = document.getElementById('gas-arrow');
+    const isOpen = form.style.display !== 'none';
+    form.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent = isOpen ? '▶' : '▼';
+  });
+
+  document.getElementById('gas-hist-toggle').addEventListener('click', () => {
+    const container = document.getElementById('gas-history-container');
+    const arrow = document.getElementById('gas-hist-arrow');
+    const isOpen = container.style.display !== 'none';
+    container.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent = isOpen ? '▶' : '▼';
+  });
+
+  document.getElementById('carwash-toggle').addEventListener('click', () => {
+    const form = document.getElementById('carwash-form');
+    const arrow = document.getElementById('carwash-arrow');
+    const isOpen = form.style.display !== 'none';
+    form.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent = isOpen ? '▶' : '▼';
+    if (!isOpen) {
+      document.getElementById('carwash-date').value = fmtDate(new Date());
+      renderCarwashForm();
+    }
+  });
+
+  // 洗車履歴アコーディオントグル
+  document.getElementById('carwash-hist-toggle').addEventListener('click', () => {
+    const container = document.getElementById('carwash-history-container');
+    const arrow = document.getElementById('carwash-hist-arrow');
+    const isOpen = container.style.display !== 'none';
+    container.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent = isOpen ? '▶' : '▼';
+  });
+
+  // 設定の洗車料金保存
+  // 洗車料金は全店メニュー式のため設定保存不要
+
+  loadCarwashData();
+
+  document.getElementById('prev-period').addEventListener('click', () => { viewOffset--; renderSummary(); });
+  document.getElementById('next-period').addEventListener('click', () => { viewOffset++; renderSummary(); });
+
+  document.getElementById('cal-prev').addEventListener('click', () => { viewOffset--; renderList(); });
+  document.getElementById('cal-next').addEventListener('click', () => { viewOffset++; renderList(); });
+
+  document.getElementById('quick-date').value = fmtDate(new Date());
+  document.getElementById('quick-date').addEventListener('change', loadQuickInput);
+
+  // 入力アコーディオントグル
+  document.getElementById('input-toggle').addEventListener('click', () => {
+    const form = document.getElementById('input-form');
+    const arrow = document.getElementById('input-arrow');
+    const isOpen = form.style.display !== 'none';
+    form.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent = isOpen ? '▶' : '▼';
+    if (!isOpen) loadQuickInput();
+  });
+
+  function updateWorkHoursPreview() {
+    const start = document.getElementById('quick-start').value;
+    const end = document.getElementById('quick-end').value;
+    const preview = document.getElementById('work-hours-preview');
+    if (start && end) {
+      const [sh, sm] = start.split(':').map(Number);
+      const [eh, em] = end.split(':').map(Number);
+      let mins = (eh * 60 + em) - (sh * 60 + sm);
+      if (mins < 0) mins += 24 * 60;
+      mins += 60; // みなし1時間
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      preview.textContent = `勤務時間: ${h}時間${m > 0 ? m + '分' : ''}(実働 + みなし1時間)`;
+    } else {
+      preview.textContent = '';
+    }
+  }
+
+  document.getElementById('quick-start').addEventListener('change', updateWorkHoursPreview);
+  document.getElementById('quick-end').addEventListener('change', updateWorkHoursPreview);
+
+  // 出勤・退勤ボタン(現在時刻を自動入力)
+  // 実車高速・空車高速 アコーディオントグル
+  document.getElementById('jissya-toggle').addEventListener('click', () => {
+    const form = document.getElementById('jissya-form');
+    const arrow = document.getElementById('jissya-arrow');
+    const isOpen = form.style.display !== 'none';
+    form.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent = isOpen ? '▶' : '▼';
+  });
+  // 燃料費アコーディオントグル
+  // Uberモーダル
+  let uberModalItems = [];
+
+  function renderUberModalList() {
+    const list = document.getElementById('uber-modal-list');
+    list.innerHTML = uberModalItems.map((amt, i) => `
+      <span style="display:inline-flex;align-items:center;gap:4px;background:#2a2a2a;border:0.5px solid #9B59B6;border-radius:6px;padding:3px 8px;font-size:12px;color:#9B59B6;">
+        ¥${amt.toLocaleString()}
+        <button data-idx="${i}" style="background:transparent;border:none;color:#A32D2D;font-size:12px;padding:0;cursor:pointer;">×</button>
+      </span>
+    `).join('');
+    list.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        uberModalItems.splice(parseInt(btn.getAttribute('data-idx')), 1);
+        renderUberModalList();
+      });
+    });
+  }
+
+  document.getElementById('uber-open-btn').addEventListener('click', () => {
+    const modal = document.getElementById('uber-modal');
+    modal.style.display = 'flex';
+    // 今日の日付をセット
+    document.getElementById('uber-date').value = fmtDate(new Date());
+    uberModalItems = [];
+    document.getElementById('uber-modal-input').value = '';
+    renderUberModalList();
+  });
+
+  document.getElementById('uber-modal-close').addEventListener('click', () => {
+    document.getElementById('uber-modal').style.display = 'none';
+  });
+
+  document.getElementById('uber-modal-add-btn').addEventListener('click', () => {
+    const val = parseInt(document.getElementById('uber-modal-input').value) || 0;
+    if (val <= 0) return;
+    uberModalItems.push(val);
+    document.getElementById('uber-modal-input').value = '';
+    renderUberModalList();
+  });
+  document.getElementById('uber-modal-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('uber-modal-add-btn').click();
+  });
+
+  document.getElementById('uber-modal-save').addEventListener('click', () => {
+    const date = document.getElementById('uber-date').value;
+    if (!date) { showToast('日付を選んでください', true); return; }
+    const total = uberModalItems.reduce((s, v) => s + v, 0);
+    if (total === 0) { showToast('金額を入力してください', true); return; }
+    // allDataの該当日に保存
+    if (!allData[date]) allData[date] = { tab:0, jissya:0, jihara:0 };
+    allData[date].uber = total;
+    allData[date].uberItems = [...uberModalItems];
+    saveData();
+    document.getElementById('uber-modal').style.display = 'none';
+    showToast(`Uber売上 ${fmtYen(total)} を保存しました`);
+    renderSummary();
+  });
+
+  document.getElementById('fuel-toggle').addEventListener('click', () => {
+    const form = document.getElementById('fuel-form');
+    const arrow = document.getElementById('fuel-arrow');
+    const isOpen = form.style.display !== 'none';
+    form.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent = isOpen ? '▶' : '▼';
+  });
+
+  // 燃料費の自動計算(メーター差分から)
+  function updateFuelCalc() {
+    const meterStart = parseFloat(document.getElementById('quick-meter-start').value) || 0;
+    const meterEnd = parseFloat(document.getElementById('quick-meter-end').value) || 0;
+    const distance = meterEnd > meterStart ? meterEnd - meterStart : 0;
+    const type = document.querySelector('input[name="fuel-type"]:checked')?.value || 'gasoline';
+    const rate = type === 'ev' ? 15 : 20;
+    const total = Math.round(distance * rate);
+    document.getElementById('fuel-distance-display').textContent = distance + 'km';
+    document.getElementById('fuel-calc').textContent = fmtYen(total);
+    document.getElementById('quick-fuel-distance').value = distance;
+    document.getElementById('quick-fuel-type').value = type;
+    // プレビュー(閉じてる時に見える)も更新
+    const previewEl = document.getElementById('fuel-total-preview');
+    if (total > 0) {
+      previewEl.textContent = fmtYen(total);
+      previewEl.style.color = '#e8e8e8';
+    } else {
+      previewEl.textContent = 'メーター未入力';
+      previewEl.style.color = '#777';
+    }
+  }
+  document.getElementById('quick-meter-start').addEventListener('input', updateFuelCalc);
+  document.getElementById('quick-meter-end').addEventListener('input', updateFuelCalc);
+  document.querySelectorAll('input[name="fuel-type"]').forEach(r => r.addEventListener('change', updateFuelCalc));
+
+  document.getElementById('jihara-toggle').addEventListener('click', () => {
+    const form = document.getElementById('jihara-form');
+    const arrow = document.getElementById('jihara-arrow');
+    const isOpen = form.style.display !== 'none';
+    form.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent = isOpen ? '▶' : '▼';
+  });
+
+  // ---- 高速料金の都度入力 ----
+  let jissyaItems = [];
+  let jiharaItems = [];
+
+  function renderHighwayList(items, listId, totalId, hiddenId) {
+    const list = document.getElementById(listId);
+    list.innerHTML = items.map((amt, i) => `
+      <span style="display:inline-flex;align-items:center;gap:4px;background:#2a2a2a;border:0.5px solid #3a3a3a;border-radius:6px;padding:3px 8px;font-size:12px;">
+        ¥${amt.toLocaleString()}
+        <button data-idx="${i}" style="background:transparent;border:none;color:#A32D2D;font-size:12px;padding:0;cursor:pointer;line-height:1;">×</button>
+      </span>
+    `).join('');
+    list.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        items.splice(parseInt(btn.getAttribute('data-idx')), 1);
+        updateHighwayTotal(items, listId, totalId, hiddenId);
+      });
+    });
+    const total = items.reduce((s, v) => s + v, 0);
+    const previewEl = document.getElementById(totalId);
+    if (total > 0) {
+      previewEl.textContent = '¥' + total.toLocaleString();
+      previewEl.style.color = '#e8e8e8';
+    } else {
+      previewEl.textContent = 'タップして追加 ＋';
+      previewEl.style.color = '#777';
+    }
+    document.getElementById(hiddenId).value = total;
+  }
+
+  function updateHighwayTotal(items, listId, totalId, hiddenId) {
+    renderHighwayList(items, listId, totalId, hiddenId);
+  }
+
+  document.getElementById('jissya-add-btn').addEventListener('click', () => {
+    const val = parseInt(document.getElementById('jissya-input').value) || 0;
+    if (val <= 0) return;
+    jissyaItems.push(val);
+    document.getElementById('jissya-input').value = '';
+    renderHighwayList(jissyaItems, 'jissya-list', 'jissya-total-preview', 'quick-jissya');
+  });
+
+  document.getElementById('jihara-add-btn').addEventListener('click', () => {
+    const val = parseInt(document.getElementById('jihara-input').value) || 0;
+    if (val <= 0) return;
+    jiharaItems.push(val);
+    document.getElementById('jihara-input').value = '';
+    renderHighwayList(jiharaItems, 'jihara-list', 'jihara-total-preview', 'quick-jihara');
+  });
+
+  // Enterキーでも追加できるように
+  document.getElementById('jissya-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('jissya-add-btn').click();
+  });
+  document.getElementById('jihara-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('jihara-add-btn').click();
+  });
+
+  function nowTime() {
+    const now = new Date();
+    return String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  }
+  document.getElementById('btn-start-now').addEventListener('click', () => {
+    document.getElementById('quick-start').value = nowTime();
+    updateWorkHoursPreview();
+    showToast('出勤時刻を記録しました');
+  });
+  document.getElementById('btn-end-now').addEventListener('click', () => {
+    document.getElementById('quick-end').value = nowTime();
+    updateWorkHoursPreview();
+    showToast('退勤時刻を記録しました');
+  });
+
+  // 有給・欠勤ボタン
+  function saveDayType(dayType, label) {
+    const date = document.getElementById('quick-date').value;
+    if (!date) { alert('日付を入れてください'); return; }
+    // 既に同じdayTypeで記録済みなら何もしない(2重デクリメント防止)
+    const wasLeave = allData[date] && allData[date].dayType === 'leave';
+    if (!confirm(`${date} を「${label}」として記録しますか?`)) return;
+    allData[date] = { dayType, tab: 0, jissya: 0, jihara: 0, startTime: '', endTime: '' };
+    saveData();
+    // 有給ボタン押下時のみ保有日数を-1
+    if (dayType === 'leave' && !wasLeave && leaveDays !== null && leaveDays > 0) {
+      leaveDays -= 1;
+      localStorage.setItem(LEAVE_DAYS_KEY, String(leaveDays));
+    }
+    clearInputs();
+    const next = new Date(date);
+    next.setDate(next.getDate() + 1);
+    document.getElementById('quick-date').value = fmtDate(next);
+    loadQuickInput();
+    // フォームを閉じる
+    document.getElementById('input-form').style.display = 'none';
+    document.getElementById('input-arrow').textContent = '▶';
+    showToast(`${label}として記録しました`);
+    renderSummary();
+  }
+  document.getElementById('btn-leave').addEventListener('click', () => saveDayType('leave', '有給'));
+  document.getElementById('btn-absence').addEventListener('click', () => saveDayType('absence', '欠勤'));
+
+  document.getElementById('quick-save').addEventListener('click', () => {
+    const date = document.getElementById('quick-date').value;
+    if (!date) { alert('日付を入れてください'); return; }
+    const tab = parseInt(document.getElementById('quick-tab').value) || 0;
+    const jissya = parseInt(document.getElementById('quick-jissya').value) || 0;
+    const jihara = parseInt(document.getElementById('quick-jihara').value) || 0;
+    const startTime = document.getElementById('quick-start').value;
+    const endTime = document.getElementById('quick-end').value;
+    const meterStart = parseFloat(document.getElementById('quick-meter-start').value) || 0;
+    const meterEnd = parseFloat(document.getElementById('quick-meter-end').value) || 0;
+    const fuelDistance = parseFloat(document.getElementById('quick-fuel-distance').value) || 0;
+    const fuelType = document.getElementById('quick-fuel-type').value || 'gasoline';
+    const entry = { tab, jissya, jihara, jissyaItems: [...jissyaItems], jiharaItems: [...jiharaItems], startTime, endTime };
+    if (meterStart > 0) entry.meterStart = meterStart;
+    if (meterEnd > 0) entry.meterEnd = meterEnd;
+    entry.fuelType = fuelType; // 車種は常に保存
+    if (fuelDistance > 0) entry.fuelDistance = fuelDistance;
+    allData[date] = entry;
+    saveData();
+
+    clearInputs();
+    // 保存後は日付をそのまま維持(翌日に進まない)
+    loadQuickInput();
+
+    showToast('保存しました');
+    // 保存後はアコーディオンを閉じる
+    document.getElementById('input-form').style.display = 'none';
+    document.getElementById('input-arrow').textContent = '▶';
+    renderSummary();
+  });
+
+  document.getElementById('save-goal-btn').addEventListener('click', () => {
+    goal = parseInt(document.getElementById('input-goal').value) || 0;
+    localStorage.setItem(GOAL_KEY, String(goal));
+    showToast('目標を保存しました');
+  });
+
+  document.getElementById('save-leave-days-btn').addEventListener('click', () => {
+    const val = document.getElementById('input-leave-days').value;
+    leaveDays = val === '' ? null : Math.max(0, parseInt(val) || 0);
+    if (leaveDays === null) {
+      localStorage.removeItem(LEAVE_DAYS_KEY);
+    } else {
+      localStorage.setItem(LEAVE_DAYS_KEY, String(leaveDays));
+    }
+    showToast('保有有給日数を保存しました');
+    renderSummary();
+  });
+
+  document.getElementById('export-btn').addEventListener('click', async () => {
+    const today = fmtDate(new Date());
+    const bom = '\uFEFF';
+
+    const sorted = Object.entries(allData).sort((a,b) => a[0].localeCompare(b[0]));
+    let csv1 = '日付,売上,実車高速,空車高速(自腹),純売上,実質手取り,出勤時刻,退勤時刻,区分,走行距離,車種,開始メーター,終了メーター\n';
+    sorted.forEach(([date, e]) => {
+      const tab = e.tab||0, jissya = e.jissya||0, jihara = e.jihara||0;
+      const pure = tab - jissya;
+      csv1 += `${date},${tab},${jissya},${jihara},${pure},${pure-jihara},${e.startTime||''},${e.endTime||''},${e.dayType||''},${e.fuelDistance||0},${e.fuelType||''},${e.meterStart||0},${e.meterEnd||0}\n`;
+    });
+    if (leaveDays !== null) csv1 += `#保有有給日数,${leaveDays}\n`;
+    if (goal > 0) csv1 += `#月間目標,${goal}\n`;
+
+    let csv2 = '期間キー,日付,金額,内訳\n';
+    Object.entries(cleaningData).forEach(([key, records]) => {
+      records.forEach(r => { csv2 += `${key},${r.date},${r.amount},"${r.detail}"\n`; });
+    });
+
+    let csv3 = '期間キー,日付,店舗,金額,内訳\n';
+    Object.entries(carwashData).forEach(([key, records]) => {
+      records.forEach(r => { csv3 += `${key},${r.date},${r.shop},${r.amount},"${r.detail}"\n`; });
+    });
+
+    let csv4 = '日付\n';
+    Object.keys(holidays).sort().forEach(date => { if (holidays[date]) csv4 += `${date}\n`; });
+
+    let csv5 = '期間キー,日付,車種,走行距離,レート,金額\n';
+    Object.entries(gasData).forEach(([key, records]) => {
+      records.forEach(r => { csv5 += `${key},${r.date},${r.type||'gasoline'},${r.distance||0},${r.rate||20},${r.amount}\n`; });
+    });
+
+    const zip = new JSZip();
+    zip.file('mk_sales.csv', bom + csv1);
+    zip.file('mk_cleaning.csv', bom + csv2);
+    zip.file('mk_carwash.csv', bom + csv3);
+    zip.file('mk_holidays.csv', bom + csv4);
+    zip.file('mk_gas.csv', bom + csv5);
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mk_backup_${today}.zip`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast('ZIPエクスポート完了');
+  });
+
+  document.getElementById('import-btn').addEventListener('click', () => {
+    document.getElementById('import-file').click();
+  });
+
+  document.getElementById('import-file').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // ZIPかCSVか判断
+    if (file.name.endsWith('.zip')) {
+      // ZIPインポート
+      try {
+        const zip = await JSZip.loadAsync(file);
+
+      // 売上CSV
+      const salesFile = zip.file('mk_sales.csv');
+      if (salesFile) {
+        const text = (await salesFile.async('text')).replace(/^\uFEFF/, '');
+        const lines = text.split(/\r?\n/);
+        let count = 0;
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(',');
+          if (cols.length < 2) continue;
+          const date = cols[0].trim();
+          // 設定値行(#で始まる)を先に処理
+          if (cols[0].trim() === '#保有有給日数' && cols[1]) {
+            leaveDays = parseInt(cols[1]) || 0;
+            localStorage.setItem(LEAVE_DAYS_KEY, String(leaveDays));
+            continue;
+          } else if (cols[0].trim() === '#月間目標' && cols[1]) {
+            goal = parseInt(cols[1]) || 0;
+            localStorage.setItem(GOAL_KEY, String(goal));
+            continue;
+          }
+          if (cols.length < 4) continue;
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+          const entry = { tab: parseInt(cols[1])||0, jissya: parseInt(cols[2])||0, jihara: parseInt(cols[3])||0 };
+          if (cols.length >= 9) {
+            if (cols[6]) entry.startTime = cols[6].trim();
+            if (cols[7]) entry.endTime = cols[7].trim();
+            if (cols[8]) entry.dayType = cols[8].trim();
+          }
+          if (cols.length >= 11) {
+            const fd = parseFloat(cols[9]); if (fd > 0) entry.fuelDistance = fd;
+            if (cols[10] && cols[10].trim()) entry.fuelType = cols[10].trim();
+          }
+          if (cols.length >= 13) {
+            const ms = parseFloat(cols[11]); if (ms > 0) entry.meterStart = ms;
+            const me = parseFloat(cols[12]); if (me > 0) entry.meterEnd = me;
+          }
+          allData[date] = entry;
+          count++;
+        }
+        saveData();
+        if (goal > 0) document.getElementById('input-goal').value = goal;
+        if (leaveDays !== null) document.getElementById('input-leave-days').value = leaveDays;
+      }
+
+      // クリーニングCSV
+      const cleanFile = zip.file('mk_cleaning.csv');
+      if (cleanFile) {
+        const text = (await cleanFile.async('text')).replace(/^\uFEFF/, '');
+        const lines = text.split(/\r?\n/);
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(',');
+          if (cols.length < 4) continue;
+          const key = cols[0].trim(); const date = cols[1].trim();
+          const amount = parseInt(cols[2]) || 0;
+          const detail = cols[3].replace(/^"|"$/g, '');
+          if (!key || !date) continue;
+          if (!cleaningData[key]) cleaningData[key] = [];
+          cleaningData[key].push({ date, amount, detail });
+        }
+        saveCleaningData();
+      }
+
+      // 洗車CSV
+      const carwashFile = zip.file('mk_carwash.csv');
+      if (carwashFile) {
+        const text = (await carwashFile.async('text')).replace(/^\uFEFF/, '');
+        const lines = text.split(/\r?\n/);
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(',');
+          if (cols.length < 5) continue;
+          const key = cols[0].trim(); const date = cols[1].trim();
+          const shop = cols[2].trim(); const amount = parseInt(cols[3]) || 0;
+          const detail = cols[4].replace(/^"|"$/g, '');
+          if (!key || !date) continue;
+          if (!carwashData[key]) carwashData[key] = [];
+          carwashData[key].push({ date, shop, amount, detail });
+        }
+        saveCarwashData();
+      }
+
+      // 公休日CSV
+      const holidayFile = zip.file('mk_holidays.csv');
+      if (holidayFile) {
+        const text = (await holidayFile.async('text')).replace(/^\uFEFF/, '');
+        const lines = text.split(/\r?\n/);
+        for (let i = 1; i < lines.length; i++) {
+          const date = lines[i].trim();
+          if (/^\d{4}-\d{2}-\d{2}$/.test(date)) holidays[date] = true;
+        }
+        localStorage.setItem(HOLIDAY_KEY, JSON.stringify(holidays));
+      }
+
+      // ガソリンCSV
+      const gasFile = zip.file('mk_gas.csv');
+      if (gasFile) {
+        const text = (await gasFile.async('text')).replace(/^\uFEFF/, '');
+        const lines = text.split(/\r?\n/);
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(',');
+          if (cols.length < 5) continue;
+          const key = cols[0].trim(); const date = cols[1].trim();
+          const type = cols[2].trim() || 'gasoline';
+          const distance = parseFloat(cols[3]) || 0;
+          const rate = parseInt(cols[4]) || 20;
+          const amount = parseInt(cols[5]) || Math.round(distance * rate);
+          if (!key || !date) continue;
+          if (!gasData[key]) gasData[key] = [];
+          gasData[key].push({ date, type, distance, rate, amount });
+        }
+        saveGasData();
+      }
+
+      renderSummary();
+      showToast('ZIPインポート完了');
+    } catch (err) {
+      showToast('インポート失敗: ' + err.message, true);
+    }
+    } else {
+      // CSVファイル(旧版互換)
+      const text = await file.text();
+      importLegacyCsv(text);
+    }
+    e.target.value = '';
+  });
+
+  // 旧版CSV(売上のみ)インポート用 - ZIPインポートボタンとは別に将来削除予定
+  function importLegacyCsv(text) {
+    try {
+      const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
+      let count = 0;
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(','); if (cols.length < 2) continue;
+        const date = cols[0].trim();
+        if (cols[0].trim() === '#保有有給日数' && cols[1]) {
+          leaveDays = parseInt(cols[1]) || 0;
+          localStorage.setItem(LEAVE_DAYS_KEY, String(leaveDays));
+          continue;
+        } else if (cols[0].trim() === '#月間目標' && cols[1]) {
+          goal = parseInt(cols[1]) || 0;
+          localStorage.setItem(GOAL_KEY, String(goal));
+          continue;
+        }
+        if (cols.length < 4) continue;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+        const entry = { tab: parseInt(cols[1])||0, jissya: parseInt(cols[2])||0, jihara: parseInt(cols[3])||0 };
+        if (cols.length >= 9) {
+          if (cols[6]) entry.startTime = cols[6].trim();
+          if (cols[7]) entry.endTime = cols[7].trim();
+          if (cols[8]) entry.dayType = cols[8].trim();
+        }
+        if (cols.length >= 11) {
+          const fd = parseFloat(cols[9]); if (fd > 0) entry.fuelDistance = fd;
+          if (cols[10] && cols[10].trim()) entry.fuelType = cols[10].trim();
+        }
+        if (cols.length >= 13) {
+          const ms = parseFloat(cols[11]); if (ms > 0) entry.meterStart = ms;
+          const me = parseFloat(cols[12]); if (me > 0) entry.meterEnd = me;
+        }
+        allData[date] = entry; count++;
+      }
+      saveData();
+      if (goal > 0) document.getElementById('input-goal').value = goal;
+      if (leaveDays !== null) document.getElementById('input-leave-days').value = leaveDays;
+      renderSummary();
+      showToast(`売上${count}件インポートしました`);
+    } catch (err) { showToast('インポート失敗', true); }
+  }
+
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    if (confirm('全データを削除? 元に戻せません')) {
+      // 売上データ
+      allData = {};
+      localStorage.removeItem(STORAGE_KEY);
+      // クリーニング
+      cleaningData = {};
+      localStorage.removeItem(CLEANING_KEY);
+      // 洗車
+      carwashData = {};
+      localStorage.removeItem(CARWASH_KEY);
+      // 公休日
+      holidays = {};
+      localStorage.removeItem(HOLIDAY_KEY);
+      // ガソリン
+      gasData = {};
+      localStorage.removeItem(GAS_KEY);
+      // 目標
+      goal = 0;
+      localStorage.removeItem(GOAL_KEY);
+      document.getElementById('input-goal').value = '';
+      // 有給日数
+      leaveDays = null;
+      localStorage.removeItem(LEAVE_DAYS_KEY);
+      document.getElementById('input-leave-days').value = '';
+      renderSummary();
+      showToast('全データを削除しました');
+    }
+  });
+
+  loadData();
+  if (goal > 0) document.getElementById('input-goal').value = goal;
+  loadQuickInput();
+  renderSummary();
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+})();
 </script>
 </body>
 </html>
