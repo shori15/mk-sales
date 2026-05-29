@@ -441,9 +441,57 @@ canvas { max-width: 100%; }
 
     <div style="font-weight: 500; margin: 16px 0 8px;">保有有給日数</div>
     <p class="text-tertiary" style="margin-bottom: 8px; font-size: 11px;">有給を使うと自動で-1されます</p>
-    <div style="display: flex; gap: 8px;">
+    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
       <input type="number" id="input-leave-days" placeholder="例: 10" style="flex: 1;">
       <button id="save-leave-days-btn" class="btn-primary" style="padding: 10px 16px;">保存</button>
+    </div>
+
+    <!-- 有給追加管理 -->
+    <div style="background:#2a2a2a; border-radius:8px; padding:10px; margin-bottom:4px;">
+      <div style="font-size:12px; font-weight:500; margin-bottom:8px; color:#C7A545;">有給付与の記録</div>
+      <div style="display:flex; gap:6px; margin-bottom:8px; align-items:flex-end;">
+        <div style="flex:1;">
+          <label style="font-size:10px;color:#777;display:block;margin-bottom:3px;">付与日数</label>
+          <input type="number" id="leave-add-days" placeholder="例: 10" style="width:100%;">
+        </div>
+        <div style="flex:1;">
+          <label style="font-size:10px;color:#777;display:block;margin-bottom:3px;">付与日</label>
+          <input type="date" id="leave-add-date" style="width:100%;font-size:12px;padding:7px 6px;background:#1a1a1a;border:0.5px solid #3a3a3a;border-radius:8px;color:#e8e8e8;">
+        </div>
+        <button id="leave-add-btn" class="btn-primary" style="padding:10px 12px;white-space:nowrap;">追加</button>
+      </div>
+      <!-- 履歴と次回予定 -->
+      <div id="leave-history-list" style="font-size:11px;"></div>
+    </div>
+
+    <!-- 使い方ガイド -->
+    <div style="margin: 16px 0 8px;">
+      <div id="guide-toggle" class="row" style="cursor:pointer;">
+        <span style="font-weight:500;">📖 使い方ガイド</span>
+        <span id="guide-arrow" style="color:#aaa; font-size:13px;">▶</span>
+      </div>
+      <div id="guide-content" style="display:none; margin-top:10px; font-size:12px; color:#aaa; line-height:1.8;">
+        <div style="font-weight:500; color:#C7A545; margin-bottom:6px;">【サマリータブ】</div>
+        <div>・日々の入力欄から売上・高速代・燃料費を記録</div>
+        <div>・出勤/退勤ボタンで時刻を自動入力</div>
+        <div>・実車高速・空車高速はタップして金額を追加</div>
+        <div>・燃料費はタップして車種・開始/終了メーターを入力</div>
+        <div>・有給/欠勤の日は専用ボタンで記録</div>
+        <div style="font-weight:500; color:#C7A545; margin: 8px 0 6px;">【日別タブ】</div>
+        <div>・カレンダーで月ごとの稼働状況を確認</div>
+        <div>・日付をタップで公休日のON/OFF</div>
+        <div>・下スクロールで各日の詳細を確認</div>
+        <div style="font-weight:500; color:#C7A545; margin: 8px 0 6px;">【経費タブ】</div>
+        <div>・クリーニング・洗車・燃料費の記録と累計確認</div>
+        <div>・日付は後付けで変更可能</div>
+        <div style="font-weight:500; color:#C7A545; margin: 8px 0 6px;">【設定タブ】</div>
+        <div>・月間目標・保有有給日数を設定</div>
+        <div>・Uberを使う場合はサマリーの内訳から「入力＋」をタップ</div>
+        <div>・機種変更時は「全データをエクスポート」→新端末でインポート</div>
+        <div style="font-weight:500; color:#C7A545; margin: 8px 0 6px;">【純売上の計算式】</div>
+        <div>・純売上 = (売上(タブ) - 実車高速 - 空車高速) ÷ 1.1</div>
+        <div>・実質手取り = 純売上 - クリーニング - 洗車 - 燃料費 - Uber手数料</div>
+      </div>
     </div>
 
     <div style="font-weight: 500; margin: 16px 0 8px;">データ管理</div>
@@ -899,12 +947,14 @@ canvas { max-width: 100%; }
   const STORAGE_KEY = 'mk_sales_data';
   const GOAL_KEY = 'mk_sales_goal';
   const LEAVE_DAYS_KEY = 'mk_leave_days';
+  const LEAVE_HISTORY_KEY = 'mk_leave_history';
   const HOLIDAY_KEY = 'mk_holidays';
   const GAS_KEY = 'mk_gas_data';
   let allData = {};
   let goal = 0;
   let leaveDays = null;
-  let holidays = {}; // { '2026-05-01': true, ... }
+  let leaveHistory = [];
+  let holidays = {};
   let viewOffset = 0;
   let chart = null;
 
@@ -924,6 +974,10 @@ canvas { max-width: 100%; }
       const raw = localStorage.getItem(LEAVE_DAYS_KEY);
       leaveDays = raw !== null ? parseInt(raw) : null;
     } catch (e) { leaveDays = null; }
+    try {
+      const raw = localStorage.getItem(LEAVE_HISTORY_KEY);
+      leaveHistory = raw ? JSON.parse(raw) : [];
+    } catch (e) { leaveHistory = []; }
   }
 
   function saveData() {
@@ -1308,6 +1362,7 @@ canvas { max-width: 100%; }
           ${jissya > 0 ? `<div style="color:#C7A545;">実車高速 -${fmtYen(jissya)}</div>` : ''}
           ${jihara > 0 ? `<div style="color:#E05C5C;">空車高速 -${fmtYen(jihara)}</div>` : ''}
           ${fuelLine ? `<div style="color:#7ab3e0;">${fuelLine}</div>` : ''}
+          ${e.uber > 0 ? `<div style="color:#9B59B6;">Uber手数料 -${fmtYen(Math.round(e.uber * 0.2))}　(Uber売上 ${fmtYen(e.uber)})</div>` : ''}
           ${cleanAmt > 0 ? `<div style="color:#aaa;">クリーニング -${fmtYen(cleanAmt)}</div>` : ''}
           ${carwashAmt > 0 ? `<div style="color:#aaa;">洗車 -${fmtYen(carwashAmt)}</div>` : ''}
         </div>
@@ -1409,8 +1464,9 @@ canvas { max-width: 100%; }
     if (tab === 'list') renderList();
     if (tab === 'expense') renderExpense();
     if (tab === 'settings') {
-      // 有給日数を入力欄に反映
       document.getElementById('input-leave-days').value = leaveDays !== null ? leaveDays : '';
+      document.getElementById('leave-add-date').value = fmtDate(new Date());
+      renderLeaveHistory();
     }
   }
 
@@ -2266,6 +2322,73 @@ canvas { max-width: 100%; }
     showToast('目標を保存しました');
   });
 
+  // 有給付与履歴
+  function renderLeaveHistory() {
+    const container = document.getElementById('leave-history-list');
+    if (leaveHistory.length === 0) {
+      container.innerHTML = '<div style="color:#666;text-align:center;padding:6px 0;">付与履歴なし</div>';
+      return;
+    }
+    // 最新の付与日から次回予定を計算
+    const latest = leaveHistory[leaveHistory.length - 1];
+    const nextDate = new Date(latest.date);
+    nextDate.setFullYear(nextDate.getFullYear() + 1);
+    const nextStr = `${nextDate.getFullYear()}/${nextDate.getMonth()+1}/${nextDate.getDate()}`;
+
+    container.innerHTML = `
+      <div style="background:#1a1a1a;border-radius:6px;padding:8px;margin-bottom:6px;">
+        <div style="font-size:10px;color:#7ab3e0;margin-bottom:4px;">次回付与予定日</div>
+        <div style="font-size:13px;font-weight:500;color:#7ab3e0;">${nextStr}</div>
+      </div>
+      <div style="font-size:10px;color:#777;margin-bottom:4px;">付与履歴</div>
+      ${leaveHistory.slice().reverse().map((r, i) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid #3a3a3a;">
+          <div>
+            <span style="font-size:12px;">${r.date}</span>
+            <span style="font-size:11px;color:#C7A545;margin-left:8px;">+${r.days}日</span>
+          </div>
+          <button data-idx="${leaveHistory.length - 1 - i}" style="background:transparent;border:none;color:#A32D2D;font-size:11px;cursor:pointer;">削除</button>
+        </div>
+      `).join('')}
+    `;
+    container.querySelectorAll('button[data-idx]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (confirm('この付与記録を削除しますか?')) {
+          const idx = parseInt(btn.getAttribute('data-idx'));
+          leaveHistory.splice(idx, 1);
+          localStorage.setItem(LEAVE_HISTORY_KEY, JSON.stringify(leaveHistory));
+          renderLeaveHistory();
+        }
+      });
+    });
+  }
+
+  document.getElementById('leave-add-btn').addEventListener('click', () => {
+    const days = parseInt(document.getElementById('leave-add-days').value) || 0;
+    const date = document.getElementById('leave-add-date').value;
+    if (days <= 0) { showToast('付与日数を入力してください', true); return; }
+    if (!date) { showToast('付与日を入力してください', true); return; }
+    leaveHistory.push({ date, days });
+    localStorage.setItem(LEAVE_HISTORY_KEY, JSON.stringify(leaveHistory));
+    // 保有有給日数にも加算
+    leaveDays = (leaveDays || 0) + days;
+    localStorage.setItem(LEAVE_DAYS_KEY, String(leaveDays));
+    document.getElementById('input-leave-days').value = leaveDays;
+    document.getElementById('leave-add-days').value = '';
+    renderLeaveHistory();
+    renderSummary();
+    showToast(`有給 ${days}日 を追加しました`);
+  });
+
+  // 使い方ガイドトグル
+  document.getElementById('guide-toggle').addEventListener('click', () => {
+    const content = document.getElementById('guide-content');
+    const arrow = document.getElementById('guide-arrow');
+    const isOpen = content.style.display !== 'none';
+    content.style.display = isOpen ? 'none' : 'block';
+    arrow.textContent = isOpen ? '▶' : '▼';
+  });
+
   document.getElementById('save-leave-days-btn').addEventListener('click', () => {
     const val = document.getElementById('input-leave-days').value;
     leaveDays = val === '' ? null : Math.max(0, parseInt(val) || 0);
@@ -2533,6 +2656,8 @@ canvas { max-width: 100%; }
       // 有給日数
       leaveDays = null;
       localStorage.removeItem(LEAVE_DAYS_KEY);
+      leaveHistory = [];
+      localStorage.removeItem(LEAVE_HISTORY_KEY);
       document.getElementById('input-leave-days').value = '';
       renderSummary();
       showToast('全データを削除しました');
