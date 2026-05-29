@@ -1196,7 +1196,7 @@ canvas { max-width: 100%; }
     renderCalendar();
 
     const container = document.getElementById('list-container');
-    const entries = getEntriesInPeriod(viewOffset);
+    const entries = getEntriesInPeriod(viewOffset).slice().reverse();
     if (entries.length === 0) {
       container.innerHTML = '<p style="text-align: center; color: #888; font-size: 13px; padding: 2rem 0;">この期間のデータはまだありません</p>';
       return;
