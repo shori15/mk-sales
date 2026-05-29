@@ -168,14 +168,14 @@ canvas { max-width: 100%; }
 
       <!-- 実車高速 アコーディオン -->
       <div style="margin-bottom: 8px;">
-        <div id="jissya-toggle" class="row" style="cursor:pointer; padding: 6px 0; background:#2a2a2a; border-radius:8px; padding:8px 10px;">
-          <span class="label" style="margin:0;">実車高速</span>
+        <div id="jissya-toggle" class="row" style="cursor:pointer; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:8px; padding:8px 10px;">
+          <span style="font-size:12px; color:#C7A545; font-weight:500;">実車高速</span>
           <div style="display:flex;align-items:center;gap:8px;">
             <span id="jissya-total-preview" style="font-size:12px;font-weight:500;color:#777;">タップして追加 ＋</span>
             <span id="jissya-arrow" style="font-size:11px;color:#aaa;">▶</span>
           </div>
         </div>
-        <div id="jissya-form" style="display:none; margin-top:6px;">
+        <div id="jissya-form" style="display:none; margin-top:6px; background:#222; border-radius:8px; padding:8px;">
           <div style="display:flex;gap:6px;margin-bottom:4px;">
             <input type="number" id="jissya-input" placeholder="金額を入力" inputmode="numeric" pattern="[0-9]*" style="flex:1;min-width:0;">
             <button id="jissya-add-btn" style="padding:0 10px;font-size:12px;white-space:nowrap;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;">追加</button>
@@ -187,14 +187,14 @@ canvas { max-width: 100%; }
 
       <!-- 空車高速 アコーディオン -->
       <div style="margin-bottom: 8px;">
-        <div id="jihara-toggle" class="row" style="cursor:pointer; background:#2a2a2a; border-radius:8px; padding:8px 10px;">
-          <span class="label" style="margin:0;">空車高速(自腹)</span>
+        <div id="jihara-toggle" class="row" style="cursor:pointer; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:8px; padding:8px 10px;">
+          <span style="font-size:12px; color:#E05C5C; font-weight:500;">空車高速(自腹)</span>
           <div style="display:flex;align-items:center;gap:8px;">
             <span id="jihara-total-preview" style="font-size:12px;font-weight:500;color:#777;">タップして追加 ＋</span>
             <span id="jihara-arrow" style="font-size:11px;color:#aaa;">▶</span>
           </div>
         </div>
-        <div id="jihara-form" style="display:none; margin-top:6px;">
+        <div id="jihara-form" style="display:none; margin-top:6px; background:#222; border-radius:8px; padding:8px;">
           <div style="display:flex;gap:6px;margin-bottom:4px;">
             <input type="number" id="jihara-input" placeholder="金額を入力" inputmode="numeric" pattern="[0-9]*" style="flex:1;min-width:0;">
             <button id="jihara-add-btn" style="padding:0 10px;font-size:12px;white-space:nowrap;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;">追加</button>
@@ -206,14 +206,14 @@ canvas { max-width: 100%; }
 
       <!-- 燃料費 アコーディオン -->
       <div style="margin-bottom: 8px;">
-        <div id="fuel-toggle" class="row" style="cursor:pointer; background:#2a2a2a; border-radius:8px; padding:8px 10px;">
-          <span class="label" style="margin:0;">燃料費</span>
+        <div id="fuel-toggle" class="row" style="cursor:pointer; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:8px; padding:8px 10px;">
+          <span style="font-size:12px; color:#7ab3e0; font-weight:500;">燃料費</span>
           <div style="display:flex;align-items:center;gap:8px;">
             <span id="fuel-total-preview" style="font-size:12px;font-weight:500;color:#777;">タップして入力 ＋</span>
             <span id="fuel-arrow" style="font-size:11px;color:#aaa;">▶</span>
           </div>
         </div>
-        <div id="fuel-form" style="display:none; margin-top:6px;">
+        <div id="fuel-form" style="display:none; margin-top:6px; background:#222; border-radius:8px; padding:8px;">
           <div style="display:flex; gap:6px; margin-bottom:8px;">
             <label style="flex:1; display:flex; align-items:center; gap:5px; background:#2a2a2a; border:0.5px solid #3a3a3a; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:11px;">
               <input type="radio" name="fuel-type" value="gasoline" checked> <span>ガソリン車</span><span style="color:#777;font-size:9px;margin-left:auto;">¥20/km</span>
@@ -1306,19 +1306,12 @@ canvas { max-width: 100%; }
       // メーター値の復元
       document.getElementById('quick-meter-start').value = existing.meterStart || '';
       document.getElementById('quick-meter-end').value = existing.meterEnd || '';
-      // 燃料費の復元
-      if (existing.fuelDistance > 0) {
-        const ft = existing.fuelType || 'gasoline';
-        document.querySelector(`input[name="fuel-type"][value="${ft}"]`).checked = true;
-        updateFuelCalc();
-      } else {
-        document.querySelector('input[name="fuel-type"][value="gasoline"]').checked = true;
-        document.getElementById('fuel-distance-display').textContent = '0km';
-        document.getElementById('fuel-calc').textContent = '¥0';
-        document.getElementById('fuel-total-preview').textContent = 'メーター未入力';
-        document.getElementById('fuel-total-preview').style.color = '#777';
-        document.getElementById('quick-fuel-distance').value = '0';
-      }
+      // 車種を常に復元(fuelDistanceが0でも)
+      const ft = existing.fuelType || 'gasoline';
+      document.querySelector(`input[name="fuel-type"][value="${ft}"]`).checked = true;
+      document.getElementById('quick-fuel-type').value = ft;
+      // 燃料費の計算更新
+      updateFuelCalc();
       updateWorkHoursPreview();
     } else {
       clearInputs();
@@ -2126,10 +2119,8 @@ canvas { max-width: 100%; }
     const entry = { tab, jissya, jihara, jissyaItems: [...jissyaItems], jiharaItems: [...jiharaItems], startTime, endTime };
     if (meterStart > 0) entry.meterStart = meterStart;
     if (meterEnd > 0) entry.meterEnd = meterEnd;
-    if (fuelDistance > 0) {
-      entry.fuelDistance = fuelDistance;
-      entry.fuelType = fuelType;
-    }
+    entry.fuelType = fuelType; // 車種は常に保存
+    if (fuelDistance > 0) entry.fuelDistance = fuelDistance;
     allData[date] = entry;
     saveData();
 
