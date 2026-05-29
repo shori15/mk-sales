@@ -1208,7 +1208,7 @@ canvas { max-width: 100%; }
       // 有給・欠勤の場合は専用表示
       if (e.dayType === 'leave' || e.dayType === 'absence') {
         const label = e.dayType === 'leave' ? '有給' : '欠勤';
-        const color = e.dayType === 'leave' ? '#C7A545' : '#E05C5C';
+        const color = e.dayType === 'leave' ? '#1D9E75' : '#E05C5C';
         return `<div class="entry-row">
           <div class="row" style="margin-bottom: 4px;">
             <span style="font-weight: 500;">${e.date.slice(5)} (${wd})</span>
@@ -1217,33 +1217,63 @@ canvas { max-width: 100%; }
           <button class="del-btn" data-date="${e.date}" style="margin-top: 4px;">削除</button>
         </div>`;
       }
-      
+
       const jissya = e.jissya || 0;
       const jihara = e.jihara || 0;
       const pureAfterTax = Math.floor(((e.tab||0) - jissya - jihara) / 1.1);
-      let hoursText = '';
+
+      // 勤務時間・残業
+      let workLine = '';
+      let overtimeLine = '';
       if (e.startTime && e.endTime) {
         const [sh, sm] = e.startTime.split(':').map(Number);
         const [eh, em] = e.endTime.split(':').map(Number);
         let mins = (eh * 60 + em) - (sh * 60 + sm);
         if (mins < 0) mins += 24 * 60;
-        mins += 60;
+        mins += 60; // みなし1時間
         const h = Math.floor(mins / 60);
         const m = mins % 60;
-        const hourlyRate = Math.round(pureAfterTax / (mins / 60));
-        hoursText = `${e.startTime}〜${e.endTime} / 勤務${h}h${m > 0 ? m + 'm' : ''} / 時給 ${fmtYen(hourlyRate)}`;
+        workLine = `${e.startTime}〜${e.endTime}　勤務 ${h}h${m > 0 ? m + 'm' : ''}`;
+        if (mins > 480) {
+          const otMins = mins - 480;
+          const otH = Math.floor(otMins / 60);
+          const otM = otMins % 60;
+          overtimeLine = `残業 ${otH > 0 ? otH + 'h' : ''}${otM > 0 ? otM + 'm' : ''}`;
+        }
       }
+
+      // 燃料費
+      let fuelLine = '';
+      if (e.fuelDistance > 0) {
+        const rate = e.fuelType === 'ev' ? 15 : 20;
+        const fuelAmt = Math.round(e.fuelDistance * rate);
+        const carLabel = e.fuelType === 'ev' ? '電気自動車' : 'ガソリン車';
+        fuelLine = `燃料費 -${fmtYen(fuelAmt)}　(${e.fuelDistance}km / ${carLabel})`;
+      }
+
+      // その日のクリーニング
+      const periodKey = getPeriodKey(viewOffset);
+      const cleanRecs = (cleaningData[periodKey] || []).filter(r => r.date === e.date);
+      const cleanAmt = cleanRecs.reduce((s, r) => s + r.amount, 0);
+
+      // その日の洗車
+      const carwashRecs = (carwashData[periodKey] || []).filter(r => r.date === e.date);
+      const carwashAmt = carwashRecs.reduce((s, r) => s + r.amount, 0);
+
       return `<div class="entry-row">
         <div class="row" style="margin-bottom: 6px;">
           <span style="font-weight: 500;">${e.date.slice(5)} (${wd})</span>
-          <span style="font-size: 16px; font-weight: 500;">${fmtYen(pureAfterTax)}</span>
+          <span style="font-size: 16px; font-weight: 500; color: #C7A545;">${fmtYen(pureAfterTax)}</span>
         </div>
-        <div class="text-secondary" style="display: flex; gap: 12px; flex-wrap: wrap;">
-          <span>売上 ${fmtYen(e.tab||0)}</span>
-          ${jissya > 0 ? `<span class="text-tertiary">実車高速 -${fmtYen(jissya)}</span>` : ''}
-          ${jihara > 0 ? `<span class="text-danger">空車高速 -${fmtYen(jihara)}</span>` : ''}
+        <div style="font-size: 11px; color: #aaa; display:flex; flex-direction:column; gap:3px; margin-bottom:4px;">
+          <div>売上(タブ) ${fmtYen(e.tab||0)}</div>
+          ${jissya > 0 ? `<div style="color:#C7A545;">実車高速 -${fmtYen(jissya)}</div>` : ''}
+          ${jihara > 0 ? `<div style="color:#E05C5C;">空車高速 -${fmtYen(jihara)}</div>` : ''}
+          ${fuelLine ? `<div style="color:#7ab3e0;">${fuelLine}</div>` : ''}
+          ${cleanAmt > 0 ? `<div style="color:#aaa;">クリーニング -${fmtYen(cleanAmt)}</div>` : ''}
+          ${carwashAmt > 0 ? `<div style="color:#aaa;">洗車 -${fmtYen(carwashAmt)}</div>` : ''}
         </div>
-        ${hoursText ? `<div style="font-size: 11px; color: #777; margin-top: 4px;">${hoursText}</div>` : ''}
+        ${workLine ? `<div style="font-size: 11px; color: #777;">${workLine}${overtimeLine ? `　<span style="color:#C7A545;">${overtimeLine}</span>` : ''}</div>` : ''}
         <button class="del-btn" data-date="${e.date}" style="margin-top: 8px;">削除</button>
       </div>`;
     }).join('');
