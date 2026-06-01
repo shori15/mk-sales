@@ -1425,6 +1425,7 @@ canvas { max-width: 100%; }
       jiharaItems = Array.isArray(existing.jiharaItems) ? [...existing.jiharaItems]
         : (existing.jihara > 0 ? [existing.jihara] : []);
       renderHighwayList(jissyaItems, 'jissya-list', 'jissya-total-preview', 'quick-jissya');
+      renderHighwayList(jiharaItems, 'jihara-list', 'jihara-total-preview', 'quick-jihara');
       // メーター値の復元
       document.getElementById('quick-meter-start').value = existing.meterStart || '';
       document.getElementById('quick-meter-end').value = existing.meterEnd || '';
