@@ -11,6 +11,28 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>MK売上管理</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBI70x3BaD3nwLwI2DJS7S6YFoNq7nW_4E",
+    authDomain: "mk-sales-f1a97.firebaseapp.com",
+    projectId: "mk-sales-f1a97",
+    storageBucket: "mk-sales-f1a97.firebasestorage.app",
+    messagingSenderId: "965084161543",
+    appId: "1:965084161543:web:c13f46374bccf516ec6ca2"
+  };
+
+  const firebaseApp = initializeApp(firebaseConfig);
+  const db = getFirestore(firebaseApp);
+  window._db = db;
+  window._firestoreDoc = doc;
+  window._firestoreSetDoc = setDoc;
+  window._firestoreGetDoc = getDoc;
+  window._firebaseReady = true;
+  document.dispatchEvent(new Event('firebaseReady'));
+</script>
 <style>
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 body {
@@ -495,10 +517,12 @@ canvas { max-width: 100%; }
     </div>
 
     <div style="font-weight: 500; margin: 16px 0 8px;">データ管理</div>
+    <button id="cloud-login-btn" style="width: 100%; padding: 10px; margin-bottom: 8px; border-color:#2D7A56; color:#3DBA86;">☁️ クラウド保存を設定</button>
     <button id="export-btn" style="width: 100%; padding: 10px; margin-bottom: 8px;">📦 全データをエクスポート(ZIP)</button>
     <button id="import-btn" style="width: 100%; padding: 10px; margin-bottom: 8px;">📥 ZIPからインポート</button>
     <input type="file" id="import-file" accept=".zip,.csv" style="display: none;">
     <button id="reset-btn" style="width: 100%; padding: 10px; color: #A32D2D;">全データを削除</button>
+    <button id="logout-btn" style="width: 100%; padding: 10px; margin-top: 8px; color: #777; border-color: #3a3a3a;">ログアウト</button>
 
     <div class="text-tertiary" style="margin-top: 16px; line-height: 1.6;">
       締め日: 21日〜翌20日<br>
@@ -913,6 +937,49 @@ canvas { max-width: 100%; }
 
 </div>
 
+<!-- ログイン画面 -->
+<div id="login-screen" style="display:none; position:fixed; inset:0; background:#1a1a1a; z-index:2000; flex-direction:column; align-items:center; justify-content:center; padding:32px; overflow-y:auto;">
+  <div style="width:100%; max-width:340px; padding:24px 0;">
+    <div style="text-align:center; margin-bottom:24px;">
+      <div style="font-size:36px; font-weight:700; color:#C7A545; letter-spacing:-1px;">MK</div>
+      <div style="font-size:12px; color:#777; letter-spacing:3px; margin-top:4px;">SALES</div>
+    </div>
+
+    <!-- お知らせ -->
+    <div style="background:#1f2a1f; border:0.5px solid #2D7A56; border-radius:10px; padding:14px; margin-bottom:20px;">
+      <div style="font-size:13px; font-weight:600; color:#3DBA86; margin-bottom:6px;">🎉 データが消えなくなりました</div>
+      <div style="font-size:11px; color:#aaa; line-height:1.7;">
+        IDとパスワードを登録すると、データがクラウドに自動保存されます。<br>
+        機種変更やアプリ削除をしても、同じIDでログインすればデータが戻ります。
+      </div>
+    </div>
+
+    <div id="login-error" style="display:none; background:#3a1a1a; border:0.5px solid #A32D2D; border-radius:8px; padding:10px; font-size:12px; color:#E05C5C; margin-bottom:12px; text-align:center;"></div>
+
+    <div style="margin-bottom:12px;">
+      <label style="font-size:11px; color:#777; display:block; margin-bottom:4px;">ユーザーID(好きな英数字)</label>
+      <input type="text" id="login-id" placeholder="例: shori15" autocomplete="off" autocapitalize="none" style="width:100%; background:#2a2a2a; border:0.5px solid #3a3a3a; border-radius:8px; padding:12px; color:#e8e8e8; font-size:15px;">
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="font-size:11px; color:#777; display:block; margin-bottom:4px;">パスワード(好きな文字)</label>
+      <input type="password" id="login-pw" placeholder="忘れないものを" style="width:100%; background:#2a2a2a; border:0.5px solid #3a3a3a; border-radius:8px; padding:12px; color:#e8e8e8; font-size:15px;">
+    </div>
+    <button id="login-btn" style="width:100%; padding:14px; background:#C7A545; border:none; border-radius:10px; color:#1a1a1a; font-size:15px; font-weight:600;">登録してデータを守る</button>
+
+    <div style="background:#252525; border-radius:8px; padding:10px; margin-top:12px;">
+      <div style="font-size:10px; color:#888; line-height:1.6; text-align:center;">
+        ✓ 今あるデータはそのまま引き継がれます<br>
+        ✓ 初めての方は好きなIDとパスワードを決めるだけ
+      </div>
+    </div>
+
+    <button id="login-skip" style="width:100%; padding:12px; background:transparent; border:none; color:#777; font-size:13px; margin-top:16px;">あとで設定する(スキップ)</button>
+    <p style="font-size:10px; color:#555; text-align:center; margin-top:4px; line-height:1.6;">スキップしても今まで通り使えます<br>設定タブからいつでも登録できます</p>
+
+    <div id="login-loading" style="display:none; text-align:center; margin-top:12px; color:#777; font-size:12px;">接続中...</div>
+  </div>
+</div>
+
 <div id="toast" class="toast"></div>
 
 <!-- Uberモーダル -->
@@ -944,6 +1011,196 @@ canvas { max-width: 100%; }
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 (function() {
+  // Firebase同期
+  const FB_USER_KEY = 'mk_fb_user';
+  let currentUserId = null;
+
+  async function fbSave(data) {
+    if (!currentUserId || !window._db) return;
+    try {
+      await window._firestoreSetDoc(
+        window._firestoreDoc(window._db, 'users', currentUserId),
+        { data: JSON.stringify(data), updatedAt: Date.now() }
+      );
+    } catch(e) { console.warn('Firebase保存失敗:', e); }
+  }
+
+  async function fbLoad() {
+    if (!currentUserId || !window._db) return null;
+    try {
+      const snap = await window._firestoreGetDoc(
+        window._firestoreDoc(window._db, 'users', currentUserId)
+      );
+      if (snap.exists()) return JSON.parse(snap.data().data);
+      return null;
+    } catch(e) { console.warn('Firebase読込失敗:', e); return null; }
+  }
+
+  function getAllLocalData() {
+    return {
+      sales: localStorage.getItem('mk_sales_data'),
+      goal: localStorage.getItem('mk_sales_goal'),
+      leaveDays: localStorage.getItem('mk_leave_days'),
+      leaveHistory: localStorage.getItem('mk_leave_history'),
+      holidays: localStorage.getItem('mk_holidays'),
+      cleaning: localStorage.getItem('mk_cleaning_data'),
+      carwash: localStorage.getItem('mk_carwash_data'),
+    };
+  }
+
+  function restoreAllLocalData(snapshot) {
+    if (snapshot.sales) localStorage.setItem('mk_sales_data', snapshot.sales);
+    if (snapshot.goal) localStorage.setItem('mk_sales_goal', snapshot.goal);
+    if (snapshot.leaveDays) localStorage.setItem('mk_leave_days', snapshot.leaveDays);
+    if (snapshot.leaveHistory) localStorage.setItem('mk_leave_history', snapshot.leaveHistory);
+    if (snapshot.holidays) localStorage.setItem('mk_holidays', snapshot.holidays);
+    if (snapshot.cleaning) localStorage.setItem('mk_cleaning_data', snapshot.cleaning);
+    if (snapshot.carwash) localStorage.setItem('mk_carwash_data', snapshot.carwash);
+  }
+
+  // ログイン処理
+  async function doLogin() {
+    const userId = document.getElementById('login-id').value.trim();
+    const pw = document.getElementById('login-pw').value;
+    const errEl = document.getElementById('login-error');
+    const loadEl = document.getElementById('login-loading');
+
+    if (!userId || !pw) {
+      errEl.textContent = 'IDとパスワードを入力してください';
+      errEl.style.display = 'block'; return;
+    }
+    if (userId.length < 3) {
+      errEl.textContent = 'IDは3文字以上にしてください';
+      errEl.style.display = 'block'; return;
+    }
+
+    errEl.style.display = 'none';
+    loadEl.style.display = 'block';
+    document.getElementById('login-btn').disabled = true;
+
+    try {
+      const snap = await window._firestoreGetDoc(
+        window._firestoreDoc(window._db, 'users', userId)
+      );
+      if (snap.exists()) {
+        // 既存ユーザー: パスワード照合
+        const saved = JSON.parse(snap.data().data || '{}');
+        if (saved._pw !== pw) {
+          errEl.textContent = 'パスワードが違います';
+          errEl.style.display = 'block';
+          loadEl.style.display = 'none';
+          document.getElementById('login-btn').disabled = false;
+          return;
+        }
+        // データをlocalStorageに復元
+        restoreAllLocalData(saved);
+        showToast('データを復元しました');
+      } else {
+        // 新規ユーザー: 現在のlocalStorageデータを保存
+        const localData = getAllLocalData();
+        localData._pw = pw;
+        await window._firestoreSetDoc(
+          window._firestoreDoc(window._db, 'users', userId),
+          { data: JSON.stringify(localData), updatedAt: Date.now() }
+        );
+        showToast('新規登録しました');
+      }
+      // ログイン成功
+      currentUserId = userId;
+      localStorage.setItem(FB_USER_KEY, JSON.stringify({ userId, pw }));
+      localStorage.removeItem('mk_login_skipped');
+      document.getElementById('login-screen').style.display = 'none';
+      startAutoSync();
+      if (window._updateCloudButtons) window._updateCloudButtons();
+      if (window._renderSummary) window._renderSummary();
+    } catch(e) {
+      errEl.textContent = '接続エラー。ネットを確認してください';
+      errEl.style.display = 'block';
+    }
+    loadEl.style.display = 'none';
+    document.getElementById('login-btn').disabled = false;
+  }
+
+  // 保存のたびにFirebaseにも同期
+  let syncTimer = null;
+  function scheduleSync() {
+    if (!currentUserId) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(async () => {
+      const localData = getAllLocalData();
+      const saved = await fbLoad();
+      localData._pw = saved ? saved._pw : '';
+      await fbSave(localData);
+    }, 3000); // 3秒後に同期
+  }
+  window._scheduleSync = scheduleSync;
+
+  function startAutoSync() {
+    // localStorageの変更を監視
+    const origSetItem = localStorage.setItem.bind(localStorage);
+    localStorage.setItem = function(key, value) {
+      origSetItem(key, value);
+      if (key.startsWith('mk_')) scheduleSync();
+    };
+  }
+
+  // 起動時: ログイン済みか確認
+  function initLogin() {
+    document.getElementById('login-btn').addEventListener('click', doLogin);
+    document.getElementById('login-pw').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+    // スキップ
+    document.getElementById('login-skip').addEventListener('click', () => {
+      localStorage.setItem('mk_login_skipped', '1');
+      document.getElementById('login-screen').style.display = 'none';
+    });
+
+    const saved = localStorage.getItem(FB_USER_KEY);
+    if (saved) {
+      // 前回ログイン済み: 自動ログイン
+      const { userId, pw } = JSON.parse(saved);
+      currentUserId = userId;
+      document.getElementById('login-screen').style.display = 'none';
+      startAutoSync();
+      // バックグラウンドで最新データを取得
+      setTimeout(async () => {
+        const snap = await window._firestoreGetDoc(
+          window._firestoreDoc(window._db, 'users', userId)
+        );
+        if (snap.exists()) {
+          const fbData = JSON.parse(snap.data().data || '{}');
+          const fbTime = snap.data().updatedAt || 0;
+          const localSales = localStorage.getItem('mk_sales_data');
+          // Firebaseの方が新しければ復元
+          if (fbTime > (parseInt(localStorage.getItem('mk_last_save')) || 0)) {
+            restoreAllLocalData(fbData);
+            if (window._renderSummary) window._renderSummary();
+          }
+        }
+      }, 1000);
+    } else {
+      // 未ログイン: スキップ済みでなければログイン画面を表示
+      if (localStorage.getItem('mk_login_skipped')) {
+        document.getElementById('login-screen').style.display = 'none';
+      } else if (window._firebaseReady) {
+        document.getElementById('login-screen').style.display = 'flex';
+      } else {
+        document.addEventListener('firebaseReady', () => {
+          if (!localStorage.getItem('mk_login_skipped')) {
+            document.getElementById('login-screen').style.display = 'flex';
+          }
+        });
+      }
+    }
+  }
+
+  // Firebase準備完了後に初期化
+  if (window._firebaseReady) {
+    initLogin();
+  } else {
+    document.addEventListener('firebaseReady', initLogin);
+  }
   const STORAGE_KEY = 'mk_sales_data';
   const GOAL_KEY = 'mk_sales_goal';
   const LEAVE_DAYS_KEY = 'mk_leave_days';
@@ -981,8 +1238,11 @@ canvas { max-width: 100%; }
   }
 
   function saveData() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(allData)); }
-    catch (e) { showToast('保存失敗', true); }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
+      localStorage.setItem('mk_last_save', Date.now());
+      if (window._scheduleSync) window._scheduleSync();
+    } catch (e) { showToast('保存失敗', true); }
   }
 
   function showToast(msg, isError) {
@@ -1468,6 +1728,7 @@ canvas { max-width: 100%; }
       document.getElementById('input-leave-days').value = leaveDays !== null ? leaveDays : '';
       document.getElementById('leave-add-date').value = fmtDate(new Date());
       renderLeaveHistory();
+      if (window._updateCloudButtons) window._updateCloudButtons();
     }
   }
 
@@ -2669,6 +2930,40 @@ canvas { max-width: 100%; }
   if (goal > 0) document.getElementById('input-goal').value = goal;
   loadQuickInput();
   renderSummary();
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    if (confirm('ログアウトしますか?\n次回起動時にIDとパスワードが必要です')) {
+      localStorage.removeItem('mk_fb_user');
+      location.reload();
+    }
+  });
+
+  // 設定タブ: クラウド保存ボタン
+  document.getElementById('cloud-login-btn').addEventListener('click', () => {
+    localStorage.removeItem('mk_login_skipped');
+    document.getElementById('login-error').style.display = 'none';
+    document.getElementById('login-id').value = '';
+    document.getElementById('login-pw').value = '';
+    document.getElementById('login-screen').style.display = 'flex';
+  });
+
+  // ログイン状態に応じてボタン表示を切り替え
+  function updateCloudButtons() {
+    const loggedIn = !!localStorage.getItem('mk_fb_user');
+    const cloudBtn = document.getElementById('cloud-login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    if (loggedIn) {
+      const u = JSON.parse(localStorage.getItem('mk_fb_user'));
+      cloudBtn.textContent = `☁️ クラウド保存中(ID: ${u.userId})`;
+      cloudBtn.style.color = '#3DBA86';
+      logoutBtn.style.display = 'block';
+    } else {
+      cloudBtn.textContent = '☁️ クラウド保存を設定';
+      logoutBtn.style.display = 'none';
+    }
+  }
+  window._updateCloudButtons = updateCloudButtons;
+
+  window._renderSummary = renderSummary;
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
