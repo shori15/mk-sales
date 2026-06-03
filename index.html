@@ -964,7 +964,8 @@ canvas { max-width: 100%; }
       <label style="font-size:11px; color:#777; display:block; margin-bottom:4px;">パスワード(好きな文字)</label>
       <input type="password" id="login-pw" placeholder="忘れないものを" style="width:100%; background:#2a2a2a; border:0.5px solid #3a3a3a; border-radius:8px; padding:12px; color:#e8e8e8; font-size:15px;">
     </div>
-    <button id="login-btn" style="width:100%; padding:14px; background:#C7A545; border:none; border-radius:10px; color:#1a1a1a; font-size:15px; font-weight:600;">登録してデータを守る</button>
+    <button id="register-btn" style="width:100%; padding:14px; background:#C7A545; border:none; border-radius:10px; color:#1a1a1a; font-size:15px; font-weight:600; margin-bottom:8px;">新規登録(初めての方)</button>
+    <button id="login-btn" style="width:100%; padding:14px; background:transparent; border:0.5px solid #C7A545; border-radius:10px; color:#C7A545; font-size:15px; font-weight:600;">ログイン(機種変更・再インストール)</button>
 
     <div style="background:#252525; border-radius:8px; padding:10px; margin-top:12px;">
       <div style="font-size:10px; color:#888; line-height:1.6; text-align:center;">
@@ -1058,8 +1059,8 @@ canvas { max-width: 100%; }
     if (snapshot.carwash) localStorage.setItem('mk_carwash_data', snapshot.carwash);
   }
 
-  // ログイン処理
-  async function doLogin() {
+  // 認証処理(mode: 'register' or 'login')
+  async function doAuth(mode) {
     const userId = document.getElementById('login-id').value.trim();
     const pw = document.getElementById('login-pw').value;
     const errEl = document.getElementById('login-error');
@@ -1076,27 +1077,29 @@ canvas { max-width: 100%; }
 
     errEl.style.display = 'none';
     loadEl.style.display = 'block';
+    document.getElementById('register-btn').disabled = true;
     document.getElementById('login-btn').disabled = true;
+
+    const reEnable = () => {
+      loadEl.style.display = 'none';
+      document.getElementById('register-btn').disabled = false;
+      document.getElementById('login-btn').disabled = false;
+    };
 
     try {
       const snap = await window._firestoreGetDoc(
         window._firestoreDoc(window._db, 'users', userId)
       );
-      if (snap.exists()) {
-        // 既存ユーザー: パスワード照合
-        const saved = JSON.parse(snap.data().data || '{}');
-        if (saved._pw !== pw) {
-          errEl.textContent = 'パスワードが違います';
+
+      if (mode === 'register') {
+        // 新規登録: IDが既にあれば拒否
+        if (snap.exists()) {
+          errEl.textContent = 'このIDは既に使われています。別のIDにしてください';
           errEl.style.display = 'block';
-          loadEl.style.display = 'none';
-          document.getElementById('login-btn').disabled = false;
+          reEnable();
           return;
         }
-        // データをlocalStorageに復元
-        restoreAllLocalData(saved);
-        showToast('データを復元しました');
-      } else {
-        // 新規ユーザー: 現在のlocalStorageデータを保存
+        // 新規登録: 現在のlocalStorageデータを保存
         const localData = getAllLocalData();
         localData._pw = pw;
         await window._firestoreSetDoc(
@@ -1104,8 +1107,28 @@ canvas { max-width: 100%; }
           { data: JSON.stringify(localData), updatedAt: Date.now() }
         );
         showToast('新規登録しました');
+      } else {
+        // ログイン: IDがなければ拒否
+        if (!snap.exists()) {
+          errEl.textContent = 'このIDは登録されていません。新規登録してください';
+          errEl.style.display = 'block';
+          reEnable();
+          return;
+        }
+        // パスワード照合
+        const saved = JSON.parse(snap.data().data || '{}');
+        if (saved._pw !== pw) {
+          errEl.textContent = 'パスワードが違います';
+          errEl.style.display = 'block';
+          reEnable();
+          return;
+        }
+        // データを復元
+        restoreAllLocalData(saved);
+        showToast('データを復元しました');
       }
-      // ログイン成功
+
+      // 成功
       currentUserId = userId;
       localStorage.setItem(FB_USER_KEY, JSON.stringify({ userId, pw }));
       localStorage.removeItem('mk_login_skipped');
@@ -1117,8 +1140,7 @@ canvas { max-width: 100%; }
       errEl.textContent = '接続エラー。ネットを確認してください';
       errEl.style.display = 'block';
     }
-    loadEl.style.display = 'none';
-    document.getElementById('login-btn').disabled = false;
+    reEnable();
   }
 
   // 保存のたびにFirebaseにも同期
@@ -1146,9 +1168,10 @@ canvas { max-width: 100%; }
 
   // 起動時: ログイン済みか確認
   function initLogin() {
-    document.getElementById('login-btn').addEventListener('click', doLogin);
+    document.getElementById('register-btn').addEventListener('click', () => doAuth('register'));
+    document.getElementById('login-btn').addEventListener('click', () => doAuth('login'));
     document.getElementById('login-pw').addEventListener('keydown', e => {
-      if (e.key === 'Enter') doLogin();
+      if (e.key === 'Enter') doAuth('login');
     });
     // スキップ
     document.getElementById('login-skip').addEventListener('click', () => {
