@@ -269,6 +269,7 @@ canvas { max-width: 100%; }
               <span id="fuel-calc" style="font-size:13px; font-weight:500; color:#C7A545;">¥0</span>
             </div>
           </div>
+          <div style="font-size:10px; color:#666; margin-top:6px;">💡 車種を選んで、勤務開始・終了時のメーターを入力すると自動計算</div>
         </div>
         <input type="hidden" id="quick-fuel-distance" value="0">
         <input type="hidden" id="quick-fuel-type" value="gasoline">
@@ -319,42 +320,44 @@ canvas { max-width: 100%; }
     </div>
     <div class="surface">
       <div class="text-secondary">純売上</div>
-      <div id="total-pure" class="big-number">¥0</div>
+      <div id="total-pure" class="big-number" style="color:#C7A545;">¥0</div>
     </div>
   </div>
+  <div style="font-size:10px; color:#666; text-align:center; margin-bottom:8px;">💡 純売上は高速代を引いた額。実質手取り(経費も引いた額)とは別です</div>
 
   <div class="surface-sm" style="margin-bottom: 8px;">
     <div class="row" style="margin-bottom: 6px;">
       <span class="text-secondary">実車高速</span>
-      <span id="jissya-total" class="med-number text-danger">-¥0</span>
+      <span id="jissya-total" class="med-number" style="color:#999;">-¥0</span>
     </div>
     <div class="row" style="margin-bottom: 6px;">
       <span class="text-secondary">空車高速(自腹)</span>
-      <span id="jihara-total" class="med-number text-danger">-¥0</span>
+      <span id="jihara-total" class="med-number" style="color:#999;">-¥0</span>
     </div>
     <div class="row" style="margin-bottom: 6px;">
       <span class="text-secondary">クリーニング代</span>
-      <span id="cleaning-summary" class="med-number text-danger">-¥0</span>
+      <span id="cleaning-summary" class="med-number" style="color:#999;">-¥0</span>
     </div>
     <div class="row" style="margin-bottom: 6px;">
       <span class="text-secondary">洗車代</span>
-      <span id="carwash-summary" class="med-number text-danger">-¥0</span>
+      <span id="carwash-summary" class="med-number" style="color:#999;">-¥0</span>
     </div>
     <div class="row" style="margin-bottom: 6px;">
       <span class="text-secondary">燃料費</span>
-      <span id="fuel-summary" class="med-number text-danger">-¥0</span>
+      <span id="fuel-summary" class="med-number" style="color:#999;">-¥0</span>
     </div>
-    <div class="row" style="margin-bottom: 6px;">
+    <div class="row" style="margin-bottom: 4px;">
       <div style="display:flex;align-items:center;gap:6px;">
         <span class="text-secondary">Uber手数料(20%)</span>
         <button id="uber-open-btn" style="font-size:10px;padding:2px 7px;border-radius:10px;border:0.5px solid #9B59B6;background:transparent;color:#9B59B6;cursor:pointer;">入力 ＋</button>
       </div>
-      <span id="uber-summary" class="med-number text-danger">-¥0</span>
+      <span id="uber-summary" class="med-number" style="color:#999;">-¥0</span>
     </div>
-    <div class="divider" style="margin: 8px 0;"></div>
-    <div class="row">
-      <span class="text-secondary">実質手取り</span>
-      <span id="net-amount" class="med-number">¥0</span>
+    <div style="font-size:10px; color:#666; margin-bottom:6px;">💡 Uberの高速代を抜いた売上を入力(手数料20%を自動計算)</div>
+    <div class="divider" style="margin: 12px 0;"></div>
+    <div style="text-align:center; padding: 4px 0;">
+      <div class="text-secondary" style="margin-bottom: 4px;">実質手取り</div>
+      <div id="net-amount" style="font-size: 32px; font-weight: 700; color: #C7A545; letter-spacing: -0.5px;">¥0</div>
     </div>
   </div>
 
@@ -458,6 +461,7 @@ canvas { max-width: 100%; }
       <div style="text-align:center;font-size:10px;color:#888;">土</div>
     </div>
     <div id="cal-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;"></div>
+    <div style="font-size:10px; color:#666; text-align:center; margin-top:8px;">💡 日付をタップで公休の設定/解除　・　←→で前後の期間に切替</div>
   </div>
 
   <div id="list-container"></div>
