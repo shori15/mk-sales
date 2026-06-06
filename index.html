@@ -10,6 +10,14 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>MK売上管理</title>
+<!-- Google Analytics (GA4) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-T68PKSJNWH"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-T68PKSJNWH');
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -1132,6 +1140,7 @@ canvas { max-width: 100%; }
       currentUserId = userId;
       localStorage.setItem(FB_USER_KEY, JSON.stringify({ userId, pw }));
       localStorage.removeItem('mk_login_skipped');
+      if (window.gtag) window.gtag('event', mode === 'register' ? 'sign_up' : 'login', { user_id: userId });
       document.getElementById('login-screen').style.display = 'none';
       startAutoSync();
       if (window._updateCloudButtons) window._updateCloudButtons();
