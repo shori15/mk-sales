@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mk-sales-v88';
+const CACHE_NAME = 'mk-sales-v89';
 const urlsToCache = [
   './',
   './index.html',
@@ -25,6 +25,17 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const url = event.request.url;
+  // Firebase/Google/CDN系は常にネットから直接取得(SWを通さない)
+  if (url.includes('gstatic.com') ||
+      url.includes('firebaseio.com') ||
+      url.includes('googleapis.com') ||
+      url.includes('google-analytics.com') ||
+      url.includes('googletagmanager.com') ||
+      url.includes('firebase')) {
+    return; // デフォルトのネット取得に任せる
+  }
+
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request).then((res) => {
@@ -33,7 +44,13 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
         }
         return res;
-      }).catch(() => caches.match('./index.html'));
+      }).catch(() => {
+        // HTMLナビゲーションの時だけindex.htmlを返す(JSやCSSには返さない)
+        if (event.request.mode === 'navigate') {
+          return caches.match('./index.html');
+        }
+        return new Response('', { status: 504 });
+      });
     })
   );
 });

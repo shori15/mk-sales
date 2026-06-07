@@ -1231,11 +1231,26 @@ canvas { max-width: 100%; }
     }
   }
 
-  // Firebase準備完了後に初期化
+  // Firebase準備完了後に初期化(失敗してもアプリは動かす)
+  let _loginInited = false;
+  function safeInitLogin() {
+    if (_loginInited) return;
+    _loginInited = true;
+    try { initLogin(); } catch(e) { console.warn('ログイン初期化スキップ:', e); }
+  }
   if (window._firebaseReady) {
-    initLogin();
+    safeInitLogin();
   } else {
-    document.addEventListener('firebaseReady', initLogin);
+    document.addEventListener('firebaseReady', safeInitLogin);
+    // Firebaseが3秒以内に来なければ、ログインなしでアプリを使えるようにする
+    setTimeout(() => {
+      if (!_loginInited) {
+        // ログイン画面は出さず、ローカルのみで動作
+        const ls = document.getElementById('login-screen');
+        if (ls) ls.style.display = 'none';
+        _loginInited = true;
+      }
+    }, 3000);
   }
   const STORAGE_KEY = 'mk_sales_data';
   const GOAL_KEY = 'mk_sales_goal';
