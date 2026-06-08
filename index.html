@@ -1185,7 +1185,10 @@ canvas { max-width: 100%; }
     const origSetItem = localStorage.setItem.bind(localStorage);
     localStorage.setItem = function(key, value) {
       origSetItem(key, value);
-      if (key.startsWith('mk_')) scheduleSync();
+      if (key.startsWith('mk_') && key !== 'mk_last_save' && key !== 'mk_login_skipped') {
+        origSetItem('mk_last_save', Date.now());
+        scheduleSync();
+      }
     };
   }
 
