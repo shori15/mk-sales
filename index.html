@@ -162,10 +162,20 @@ button:active { transform: scale(0.98); }
 .cal-cell.is-absence { background: rgba(224,92,92,0.15); }
 .cal-holiday { font-size: 9px; color: #7ab3e0; font-weight: 500; }
 .cal-day { font-size: 12px; font-weight: 500; line-height: 1.2; }
-.cal-amount { font-size: 9px; color: #C7A545; line-height: 1.2; font-weight: 500; }
+.cal-amount { font-size: 11px; color: #C7A545; line-height: 1.2; font-weight: 500; }
 .cal-leave { font-size: 9px; color: #1D9E75; font-weight: 500; }
 .cal-absence { font-size: 9px; color: #E05C5C; font-weight: 500; }
 .cal-empty { color: #555; }
+.sub-toggle { background: #ebe9e2; border: 1px solid rgba(0,0,0,0.15); border-radius: 8px; padding: 8px 10px; }
+.sub-body { background: #f0ede6; border-radius: 8px; padding: 8px; }
+.sub-item { background: #ebe9e2; border: 0.5px solid rgba(0,0,0,0.15); border-radius: 8px; padding: 6px 8px; }
+.hw-tag { display:inline-flex; align-items:center; gap:4px; background:#ebe9e2; border:0.5px solid rgba(0,0,0,0.15); border-radius:6px; padding:3px 8px; font-size:12px; color:#2c2c2a; }
+@media (prefers-color-scheme: dark) {
+  .sub-toggle { background: #2a2a2a !important; border-color: #4a4a4a !important; }
+  .sub-body { background: #222 !important; }
+  .sub-item { background: #2a2a2a !important; border-color: #3a3a3a !important; color: #e8e8e8 !important; }
+  .hw-tag { background: #2a2a2a !important; border-color: #3a3a3a !important; color: #e8e8e8 !important; }
+}
 canvas { max-width: 100%; }
 .entry-row { background: #fff; border: 0.5px solid rgba(0,0,0,0.15); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
 </style>
@@ -198,14 +208,14 @@ canvas { max-width: 100%; }
 
       <!-- 実車高速 アコーディオン -->
       <div style="margin-bottom: 8px;">
-        <div id="jissya-toggle" class="row" style="cursor:pointer; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:8px; padding:8px 10px;">
+        <div id="jissya-toggle" class="row sub-toggle" style="cursor:pointer;">
           <span style="font-size:12px; color:#C7A545; font-weight:500;">実車高速</span>
           <div style="display:flex;align-items:center;gap:8px;">
             <span id="jissya-total-preview" style="font-size:12px;font-weight:500;color:#777;">タップして追加 ＋</span>
             <span id="jissya-arrow" style="font-size:11px;color:#aaa;">▶</span>
           </div>
         </div>
-        <div id="jissya-form" style="display:none; margin-top:6px; background:#222; border-radius:8px; padding:8px;">
+        <div id="jissya-form" class="sub-body" style="display:none; margin-top:6px;">
           <div style="display:flex;gap:6px;margin-bottom:4px;">
             <input type="number" id="jissya-input" placeholder="金額を入力" inputmode="numeric" pattern="[0-9]*" style="flex:1;min-width:0;">
             <button id="jissya-add-btn" style="padding:0 10px;font-size:12px;white-space:nowrap;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;">追加</button>
@@ -217,14 +227,14 @@ canvas { max-width: 100%; }
 
       <!-- 空車高速 アコーディオン -->
       <div style="margin-bottom: 8px;">
-        <div id="jihara-toggle" class="row" style="cursor:pointer; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:8px; padding:8px 10px;">
+        <div id="jihara-toggle" class="row sub-toggle" style="cursor:pointer;">
           <span style="font-size:12px; color:#E05C5C; font-weight:500;">空車高速(自腹)</span>
           <div style="display:flex;align-items:center;gap:8px;">
             <span id="jihara-total-preview" style="font-size:12px;font-weight:500;color:#777;">タップして追加 ＋</span>
             <span id="jihara-arrow" style="font-size:11px;color:#aaa;">▶</span>
           </div>
         </div>
-        <div id="jihara-form" style="display:none; margin-top:6px; background:#222; border-radius:8px; padding:8px;">
+        <div id="jihara-form" class="sub-body" style="display:none; margin-top:6px;">
           <div style="display:flex;gap:6px;margin-bottom:4px;">
             <input type="number" id="jihara-input" placeholder="金額を入力" inputmode="numeric" pattern="[0-9]*" style="flex:1;min-width:0;">
             <button id="jihara-add-btn" style="padding:0 10px;font-size:12px;white-space:nowrap;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;">追加</button>
@@ -236,19 +246,19 @@ canvas { max-width: 100%; }
 
 
       <div style="margin-bottom: 8px;">
-        <div id="fuel-toggle" class="row" style="cursor:pointer; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:8px; padding:8px 10px;">
+        <div id="fuel-toggle" class="row sub-toggle" style="cursor:pointer;">
           <span style="font-size:12px; color:#7ab3e0; font-weight:500;">燃料費</span>
           <div style="display:flex;align-items:center;gap:8px;">
             <span id="fuel-total-preview" style="font-size:12px;font-weight:500;color:#777;">タップして入力 ＋</span>
             <span id="fuel-arrow" style="font-size:11px;color:#aaa;">▶</span>
           </div>
         </div>
-        <div id="fuel-form" style="display:none; margin-top:6px; background:#222; border-radius:8px; padding:8px;">
+        <div id="fuel-form" class="sub-body" style="display:none; margin-top:6px;">
           <div style="display:flex; gap:6px; margin-bottom:8px;">
-            <label style="flex:1; display:flex; align-items:center; gap:5px; background:#2a2a2a; border:0.5px solid #3a3a3a; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:11px;">
+            <label class="sub-item" style="flex:1; display:flex; align-items:center; gap:5px; cursor:pointer; font-size:11px;">
               <input type="radio" name="fuel-type" value="gasoline" checked> <span>ガソリン車</span><span style="color:#777;font-size:9px;margin-left:auto;">¥20/km</span>
             </label>
-            <label style="flex:1; display:flex; align-items:center; gap:5px; background:#2a2a2a; border:0.5px solid #3a3a3a; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:11px;">
+            <label class="sub-item" style="flex:1; display:flex; align-items:center; gap:5px; cursor:pointer; font-size:11px;">
               <input type="radio" name="fuel-type" value="ev"> <span>電気自動車</span><span style="color:#777;font-size:9px;margin-left:auto;">¥15/km</span>
             </label>
           </div>
@@ -262,7 +272,7 @@ canvas { max-width: 100%; }
               <input type="number" id="quick-meter-end" placeholder="例: 12595" inputmode="numeric" style="width:100%;">
             </div>
           </div>
-          <div class="row" style="background:#2a2a2a; border-radius:8px; padding:8px 10px;">
+          <div class="row sub-item" style="padding:8px 10px;">
             <span style="font-size:11px; color:#aaa;">走行距離 → 燃料費</span>
             <div>
               <span id="fuel-distance-display" style="font-size:12px; color:#777; margin-right:8px;">0km</span>
@@ -1265,6 +1275,7 @@ canvas { max-width: 100%; }
   let holidays = {};
   let viewOffset = 0;
   let chart = null;
+  let inputFormOpen = false;
 
   function loadData() {
     try {
@@ -1353,7 +1364,7 @@ canvas { max-width: 100%; }
       totalTab += e.tab || 0;
       totalJissya += e.jissya || 0;
       totalJihara += e.jihara || 0;
-      const pure = (e.tab || 0) - (e.jissya || 0);
+      const pure = Math.floor(((e.tab || 0) - (e.jissya || 0) - (e.jihara || 0)) / 1.1);
       if (pure > maxPure) maxPure = pure;
       if (e.startTime && e.endTime) {
         const [sh, sm] = e.startTime.split(':').map(Number);
@@ -1678,9 +1689,24 @@ canvas { max-width: 100%; }
           ${carwashAmt > 0 ? `<div style="color:#aaa;">洗車 -${fmtYen(carwashAmt)}</div>` : ''}
         </div>
         ${workLine ? `<div style="font-size: 11px; color: #777;">${workLine}${overtimeLine ? `　<span style="color:#C7A545;">${overtimeLine}</span>` : ''}</div>` : ''}
-        <button class="del-btn" data-date="${e.date}" style="margin-top: 8px;">削除</button>
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          <button class="edit-btn" data-date="${e.date}" style="flex:1;padding:6px;font-size:12px;background:transparent;border:0.5px solid #3a3a3a;color:#C7A545;border-radius:8px;">編集</button>
+          <button class="del-btn" data-date="${e.date}" style="flex:1;padding:6px;font-size:12px;">削除</button>
+        </div>
       </div>`;
     }).join('');
+    container.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const date = btn.getAttribute('data-date');
+        switchTab('summary');
+        document.getElementById('quick-date').value = date;
+        loadQuickInput();
+        document.getElementById('input-form').style.display = 'block';
+        document.getElementById('input-arrow').textContent = '▼';
+        inputFormOpen = true;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
     container.querySelectorAll('.del-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const date = btn.getAttribute('data-date');
@@ -1772,6 +1798,8 @@ canvas { max-width: 100%; }
       document.getElementById('quick-date').value = fmtDate(new Date());
       loadQuickInput();
       renderSummary();
+      document.getElementById('input-form').style.display = inputFormOpen ? 'block' : 'none';
+      document.getElementById('input-arrow').textContent = inputFormOpen ? '▼' : '▶';
     }
     if (tab === 'list') renderList();
     if (tab === 'expense') renderExpense();
@@ -2025,7 +2053,7 @@ canvas { max-width: 100%; }
     });
 
     const note = document.getElementById('carwash-price-note');
-    const hasUnset = CARWASH_SHOPS.filter(s => s !== '新橋' && s !== 'タムラ').some(s => !carwashPrices[s]);
+    const hasUnset = CARWASH_SHOPS.filter(s => s !== '新橋' && s !== 'タムラ' && s !== 'PCW').some(s => !carwashPrices[s]);
     note.textContent = hasUnset ? '※ 未設定の洗車屋は設定タブから料金を登録してください' : '';
   }
 
@@ -2362,6 +2390,7 @@ canvas { max-width: 100%; }
     const isOpen = form.style.display !== 'none';
     form.style.display = isOpen ? 'none' : 'block';
     arrow.textContent = isOpen ? '▶' : '▼';
+    inputFormOpen = !isOpen;
     if (!isOpen) loadQuickInput();
   });
 
@@ -2504,7 +2533,7 @@ canvas { max-width: 100%; }
   function renderHighwayList(items, listId, totalId, hiddenId) {
     const list = document.getElementById(listId);
     list.innerHTML = items.map((amt, i) => `
-      <span style="display:inline-flex;align-items:center;gap:4px;background:#2a2a2a;border:0.5px solid #3a3a3a;border-radius:6px;padding:3px 8px;font-size:12px;">
+      <span class="hw-tag">
         ¥${amt.toLocaleString()}
         <button data-idx="${i}" style="background:transparent;border:none;color:#A32D2D;font-size:12px;padding:0;cursor:pointer;line-height:1;">×</button>
       </span>
@@ -2592,6 +2621,7 @@ canvas { max-width: 100%; }
     // フォームを閉じる
     document.getElementById('input-form').style.display = 'none';
     document.getElementById('input-arrow').textContent = '▶';
+    inputFormOpen = false;
     showToast(`${label}として記録しました`);
     renderSummary();
   }
@@ -2626,6 +2656,7 @@ canvas { max-width: 100%; }
     // 保存後はアコーディオンを閉じる
     document.getElementById('input-form').style.display = 'none';
     document.getElementById('input-arrow').textContent = '▶';
+    inputFormOpen = false;
     renderSummary();
   });
 
@@ -2722,8 +2753,8 @@ canvas { max-width: 100%; }
     let csv1 = '日付,売上,実車高速,空車高速(自腹),純売上,実質手取り,出勤時刻,退勤時刻,区分,走行距離,車種,開始メーター,終了メーター\n';
     sorted.forEach(([date, e]) => {
       const tab = e.tab||0, jissya = e.jissya||0, jihara = e.jihara||0;
-      const pure = tab - jissya;
-      csv1 += `${date},${tab},${jissya},${jihara},${pure},${pure-jihara},${e.startTime||''},${e.endTime||''},${e.dayType||''},${e.fuelDistance||0},${e.fuelType||''},${e.meterStart||0},${e.meterEnd||0}\n`;
+      const pure = Math.floor((tab - jissya - jihara) / 1.1);
+      csv1 += `${date},${tab},${jissya},${jihara},${pure},,${e.startTime||''},${e.endTime||''},${e.dayType||''},${e.fuelDistance||0},${e.fuelType||''},${e.meterStart||0},${e.meterEnd||0}\n`;
     });
     if (leaveDays !== null) csv1 += `#保有有給日数,${leaveDays}\n`;
     if (goal > 0) csv1 += `#月間目標,${goal}\n`;
