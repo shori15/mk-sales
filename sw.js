@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mk-sales-v89';
+const CACHE_NAME = 'mk-sales-v90';
 const urlsToCache = [
   './',
   './index.html',
@@ -33,9 +33,22 @@ self.addEventListener('fetch', (event) => {
       url.includes('google-analytics.com') ||
       url.includes('googletagmanager.com') ||
       url.includes('firebase')) {
-    return; // デフォルトのネット取得に任せる
+    return;
   }
 
+  // index.html はネット優先: 常に最新を取得し、オフライン時のみキャッシュを使う
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).then((res) => {
+        const resClone = res.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+        return res;
+      }).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
+  // アイコン・manifest・Chart.js はキャッシュ優先(変更頻度が低いため)
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request).then((res) => {
@@ -44,13 +57,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
         }
         return res;
-      }).catch(() => {
-        // HTMLナビゲーションの時だけindex.htmlを返す(JSやCSSには返さない)
-        if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-        return new Response('', { status: 504 });
-      });
+      }).catch(() => new Response('', { status: 504 }));
     })
   );
 });
