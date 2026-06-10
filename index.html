@@ -162,20 +162,10 @@ button:active { transform: scale(0.98); }
 .cal-cell.is-absence { background: rgba(224,92,92,0.15); }
 .cal-holiday { font-size: 9px; color: #7ab3e0; font-weight: 500; }
 .cal-day { font-size: 12px; font-weight: 500; line-height: 1.2; }
-.cal-amount { font-size: 11px; color: #C7A545; line-height: 1.2; font-weight: 500; }
+.cal-amount { font-size: 9px; color: #C7A545; line-height: 1.2; font-weight: 500; }
 .cal-leave { font-size: 9px; color: #1D9E75; font-weight: 500; }
 .cal-absence { font-size: 9px; color: #E05C5C; font-weight: 500; }
 .cal-empty { color: #555; }
-.sub-toggle { background: #ebe9e2; border: 1px solid rgba(0,0,0,0.15); border-radius: 8px; padding: 8px 10px; }
-.sub-body { background: #f0ede6; border-radius: 8px; padding: 8px; }
-.sub-item { background: #ebe9e2; border: 0.5px solid rgba(0,0,0,0.15); border-radius: 8px; padding: 6px 8px; }
-.hw-tag { display:inline-flex; align-items:center; gap:4px; background:#ebe9e2; border:0.5px solid rgba(0,0,0,0.15); border-radius:6px; padding:3px 8px; font-size:12px; color:#2c2c2a; }
-@media (prefers-color-scheme: dark) {
-  .sub-toggle { background: #2a2a2a !important; border-color: #4a4a4a !important; }
-  .sub-body { background: #222 !important; }
-  .sub-item { background: #2a2a2a !important; border-color: #3a3a3a !important; color: #e8e8e8 !important; }
-  .hw-tag { background: #2a2a2a !important; border-color: #3a3a3a !important; color: #e8e8e8 !important; }
-}
 canvas { max-width: 100%; }
 .entry-row { background: #fff; border: 0.5px solid rgba(0,0,0,0.15); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
 </style>
@@ -208,14 +198,14 @@ canvas { max-width: 100%; }
 
       <!-- 実車高速 アコーディオン -->
       <div style="margin-bottom: 8px;">
-        <div id="jissya-toggle" class="row sub-toggle" style="cursor:pointer;">
+        <div id="jissya-toggle" class="row" style="cursor:pointer; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:8px; padding:8px 10px;">
           <span style="font-size:12px; color:#C7A545; font-weight:500;">実車高速</span>
           <div style="display:flex;align-items:center;gap:8px;">
             <span id="jissya-total-preview" style="font-size:12px;font-weight:500;color:#777;">タップして追加 ＋</span>
             <span id="jissya-arrow" style="font-size:11px;color:#aaa;">▶</span>
           </div>
         </div>
-        <div id="jissya-form" class="sub-body" style="display:none; margin-top:6px;">
+        <div id="jissya-form" style="display:none; margin-top:6px; background:#222; border-radius:8px; padding:8px;">
           <div style="display:flex;gap:6px;margin-bottom:4px;">
             <input type="number" id="jissya-input" placeholder="金額を入力" inputmode="numeric" pattern="[0-9]*" style="flex:1;min-width:0;">
             <button id="jissya-add-btn" style="padding:0 10px;font-size:12px;white-space:nowrap;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;">追加</button>
@@ -227,14 +217,14 @@ canvas { max-width: 100%; }
 
       <!-- 空車高速 アコーディオン -->
       <div style="margin-bottom: 8px;">
-        <div id="jihara-toggle" class="row sub-toggle" style="cursor:pointer;">
+        <div id="jihara-toggle" class="row" style="cursor:pointer; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:8px; padding:8px 10px;">
           <span style="font-size:12px; color:#E05C5C; font-weight:500;">空車高速(自腹)</span>
           <div style="display:flex;align-items:center;gap:8px;">
             <span id="jihara-total-preview" style="font-size:12px;font-weight:500;color:#777;">タップして追加 ＋</span>
             <span id="jihara-arrow" style="font-size:11px;color:#aaa;">▶</span>
           </div>
         </div>
-        <div id="jihara-form" class="sub-body" style="display:none; margin-top:6px;">
+        <div id="jihara-form" style="display:none; margin-top:6px; background:#222; border-radius:8px; padding:8px;">
           <div style="display:flex;gap:6px;margin-bottom:4px;">
             <input type="number" id="jihara-input" placeholder="金額を入力" inputmode="numeric" pattern="[0-9]*" style="flex:1;min-width:0;">
             <button id="jihara-add-btn" style="padding:0 10px;font-size:12px;white-space:nowrap;border-radius:8px;border:0.5px solid #3a3a3a;background:#2a2a2a;color:#e8e8e8;">追加</button>
@@ -246,19 +236,19 @@ canvas { max-width: 100%; }
 
 
       <div style="margin-bottom: 8px;">
-        <div id="fuel-toggle" class="row sub-toggle" style="cursor:pointer;">
+        <div id="fuel-toggle" class="row" style="cursor:pointer; background:#2a2a2a; border:1px solid #4a4a4a; border-radius:8px; padding:8px 10px;">
           <span style="font-size:12px; color:#7ab3e0; font-weight:500;">燃料費</span>
           <div style="display:flex;align-items:center;gap:8px;">
             <span id="fuel-total-preview" style="font-size:12px;font-weight:500;color:#777;">タップして入力 ＋</span>
             <span id="fuel-arrow" style="font-size:11px;color:#aaa;">▶</span>
           </div>
         </div>
-        <div id="fuel-form" class="sub-body" style="display:none; margin-top:6px;">
+        <div id="fuel-form" style="display:none; margin-top:6px; background:#222; border-radius:8px; padding:8px;">
           <div style="display:flex; gap:6px; margin-bottom:8px;">
-            <label class="sub-item" style="flex:1; display:flex; align-items:center; gap:5px; cursor:pointer; font-size:11px;">
+            <label style="flex:1; display:flex; align-items:center; gap:5px; background:#2a2a2a; border:0.5px solid #3a3a3a; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:11px;">
               <input type="radio" name="fuel-type" value="gasoline" checked> <span>ガソリン車</span><span style="color:#777;font-size:9px;margin-left:auto;">¥20/km</span>
             </label>
-            <label class="sub-item" style="flex:1; display:flex; align-items:center; gap:5px; cursor:pointer; font-size:11px;">
+            <label style="flex:1; display:flex; align-items:center; gap:5px; background:#2a2a2a; border:0.5px solid #3a3a3a; border-radius:8px; padding:6px 8px; cursor:pointer; font-size:11px;">
               <input type="radio" name="fuel-type" value="ev"> <span>電気自動車</span><span style="color:#777;font-size:9px;margin-left:auto;">¥15/km</span>
             </label>
           </div>
@@ -272,7 +262,7 @@ canvas { max-width: 100%; }
               <input type="number" id="quick-meter-end" placeholder="例: 12595" inputmode="numeric" style="width:100%;">
             </div>
           </div>
-          <div class="row sub-item" style="padding:8px 10px;">
+          <div class="row" style="background:#2a2a2a; border-radius:8px; padding:8px 10px;">
             <span style="font-size:11px; color:#aaa;">走行距離 → 燃料費</span>
             <div>
               <span id="fuel-distance-display" style="font-size:12px; color:#777; margin-right:8px;">0km</span>
@@ -1072,7 +1062,26 @@ canvas { max-width: 100%; }
   }
 
   function restoreAllLocalData(snapshot) {
-    if (snapshot.sales) localStorage.setItem('mk_sales_data', snapshot.sales);
+    // 売上データは日付ごとにマージ(各エントリの更新時刻_tsで新しい方を採用)
+    if (snapshot.sales) {
+      try {
+        const fbSales = JSON.parse(snapshot.sales);
+        const localSales = JSON.parse(localStorage.getItem('mk_sales_data') || '{}');
+        const merged = { ...fbSales };
+        for (const date in localSales) {
+          if (!merged[date]) {
+            merged[date] = localSales[date]; // ローカルにしかない日は保持
+          } else {
+            const lts = localSales[date]._ts || 0;
+            const fts = merged[date]._ts || 0;
+            if (lts > fts) merged[date] = localSales[date]; // ローカルが新しければ優先
+          }
+        }
+        localStorage.setItem('mk_sales_data', JSON.stringify(merged));
+      } catch(e) {
+        localStorage.setItem('mk_sales_data', snapshot.sales);
+      }
+    }
     if (snapshot.goal) localStorage.setItem('mk_sales_goal', snapshot.goal);
     if (snapshot.leaveDays) localStorage.setItem('mk_leave_days', snapshot.leaveDays);
     if (snapshot.leaveHistory) localStorage.setItem('mk_leave_history', snapshot.leaveHistory);
@@ -1168,24 +1177,47 @@ canvas { max-width: 100%; }
 
   // 保存のたびにFirebaseにも同期
   let syncTimer = null;
-  function scheduleSync() {
-    if (!currentUserId) return;
-    clearTimeout(syncTimer);
-    syncTimer = setTimeout(async () => {
+  let syncPending = false;
+  async function doSyncNow() {
+    if (!currentUserId || !syncPending) return;
+    syncPending = false;
+    try {
       const localData = getAllLocalData();
       const saved = await fbLoad();
-      localData._pw = saved ? saved._pw : '';
+      // パスワードはFirebase→ローカル保存の順で確実に取得(消失防止)
+      let localPw = '';
+      try { localPw = (JSON.parse(localStorage.getItem(FB_USER_KEY)) || {}).pw || ''; } catch(e) {}
+      localData._pw = (saved && saved._pw) || localPw;
       await fbSave(localData);
-    }, 3000); // 3秒後に同期
+    } catch(e) { console.warn('同期失敗:', e); }
+  }
+  function scheduleSync() {
+    if (!currentUserId) return;
+    syncPending = true;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(doSyncNow, 1000); // 1秒後に同期
   }
   window._scheduleSync = scheduleSync;
+
+  // アプリを閉じる・バックグラウンドに行く時は即時同期(iPhoneでの同期漏れ対策)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      clearTimeout(syncTimer);
+      doSyncNow();
+    }
+  });
+  window.addEventListener('pagehide', () => {
+    clearTimeout(syncTimer);
+    doSyncNow();
+  });
 
   function startAutoSync() {
     // localStorageの変更を監視
     const origSetItem = localStorage.setItem.bind(localStorage);
     localStorage.setItem = function(key, value) {
       origSetItem(key, value);
-      if (key.startsWith('mk_') && key !== 'mk_last_save' && key !== 'mk_login_skipped') {
+      // データ系の保存時は必ず最終保存時刻を更新(クリーニング・洗車等も含む)
+      if (key.startsWith('mk_') && key !== 'mk_last_save' && key !== 'mk_fb_user' && key !== 'mk_login_skipped') {
         origSetItem('mk_last_save', Date.now());
         scheduleSync();
       }
@@ -1208,25 +1240,34 @@ canvas { max-width: 100%; }
     const saved = localStorage.getItem(FB_USER_KEY);
     if (saved) {
       // 前回ログイン済み: 自動ログイン
-      const { userId, pw } = JSON.parse(saved);
+      let userId, pw;
+      try {
+        ({ userId, pw } = JSON.parse(saved));
+      } catch(e) {
+        localStorage.removeItem(FB_USER_KEY);
+        return;
+      }
       currentUserId = userId;
       document.getElementById('login-screen').style.display = 'none';
       startAutoSync();
       // バックグラウンドで最新データを取得
       setTimeout(async () => {
-        const snap = await window._firestoreGetDoc(
-          window._firestoreDoc(window._db, 'users', userId)
-        );
-        if (snap.exists()) {
-          const fbData = JSON.parse(snap.data().data || '{}');
-          const fbTime = snap.data().updatedAt || 0;
-          const localSales = localStorage.getItem('mk_sales_data');
-          // Firebaseの方が新しければ復元
-          if (fbTime > (parseInt(localStorage.getItem('mk_last_save')) || 0)) {
-            restoreAllLocalData(fbData);
-            if (window._renderSummary) window._renderSummary();
+        try {
+          const snap = await window._firestoreGetDoc(
+            window._firestoreDoc(window._db, 'users', userId)
+          );
+          if (snap.exists()) {
+            const fbData = JSON.parse(snap.data().data || '{}');
+            const fbTime = snap.data().updatedAt || 0;
+            const localTime = parseInt(localStorage.getItem('mk_last_save')) || 0;
+            // Firebaseが明確に新しい(60秒以上)場合のみ復元。誤上書きを防ぐ
+            if (fbTime > localTime + 60000) {
+              restoreAllLocalData(fbData);
+              if (window._renderSummary) window._renderSummary();
+              showToast('クラウドから最新データを取得しました');
+            }
           }
-        }
+        } catch(e) { console.warn('同期取得スキップ:', e); }
       }, 1000);
     } else {
       // 未ログイン: スキップ済みでなければログイン画面を表示
@@ -1278,7 +1319,6 @@ canvas { max-width: 100%; }
   let holidays = {};
   let viewOffset = 0;
   let chart = null;
-  let inputFormOpen = false;
 
   function loadData() {
     try {
@@ -1367,7 +1407,7 @@ canvas { max-width: 100%; }
       totalTab += e.tab || 0;
       totalJissya += e.jissya || 0;
       totalJihara += e.jihara || 0;
-      const pure = Math.floor(((e.tab || 0) - (e.jissya || 0) - (e.jihara || 0)) / 1.1);
+      const pure = (e.tab || 0) - (e.jissya || 0);
       if (pure > maxPure) maxPure = pure;
       if (e.startTime && e.endTime) {
         const [sh, sm] = e.startTime.split(':').map(Number);
@@ -1381,7 +1421,11 @@ canvas { max-width: 100%; }
         if (mins > 480) totalOvertimeMin += (mins - 480);
       }
     });
-    const totalPureAfterTax = Math.floor((totalTab - totalJissya - totalJihara) / 1.1); // 純売上=(売上-全高速)÷1.1
+    // 純売上=各日の純売上(floor)の合計。日別タブ・カレンダーと完全一致させる
+    const totalPureAfterTax = entries.reduce((sum, e) => {
+      if (e.dayType) return sum;
+      return sum + Math.floor(((e.tab||0) - (e.jissya||0) - (e.jihara||0)) / 1.1);
+    }, 0);
 
     // クリーニング累計
     const cleaningKey = getPeriodKey(viewOffset);
@@ -1692,24 +1736,9 @@ canvas { max-width: 100%; }
           ${carwashAmt > 0 ? `<div style="color:#aaa;">洗車 -${fmtYen(carwashAmt)}</div>` : ''}
         </div>
         ${workLine ? `<div style="font-size: 11px; color: #777;">${workLine}${overtimeLine ? `　<span style="color:#C7A545;">${overtimeLine}</span>` : ''}</div>` : ''}
-        <div style="display:flex;gap:6px;margin-top:8px;">
-          <button class="edit-btn" data-date="${e.date}" style="flex:1;padding:6px;font-size:12px;background:transparent;border:0.5px solid #3a3a3a;color:#C7A545;border-radius:8px;">編集</button>
-          <button class="del-btn" data-date="${e.date}" style="flex:1;padding:6px;font-size:12px;">削除</button>
-        </div>
+        <button class="del-btn" data-date="${e.date}" style="margin-top: 8px;">削除</button>
       </div>`;
     }).join('');
-    container.querySelectorAll('.edit-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const date = btn.getAttribute('data-date');
-        switchTab('summary');
-        document.getElementById('quick-date').value = date;
-        loadQuickInput();
-        document.getElementById('input-form').style.display = 'block';
-        document.getElementById('input-arrow').textContent = '▼';
-        inputFormOpen = true;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
-    });
     container.querySelectorAll('.del-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const date = btn.getAttribute('data-date');
@@ -1801,8 +1830,6 @@ canvas { max-width: 100%; }
       document.getElementById('quick-date').value = fmtDate(new Date());
       loadQuickInput();
       renderSummary();
-      document.getElementById('input-form').style.display = inputFormOpen ? 'block' : 'none';
-      document.getElementById('input-arrow').textContent = inputFormOpen ? '▼' : '▶';
     }
     if (tab === 'list') renderList();
     if (tab === 'expense') renderExpense();
@@ -2056,7 +2083,7 @@ canvas { max-width: 100%; }
     });
 
     const note = document.getElementById('carwash-price-note');
-    const hasUnset = CARWASH_SHOPS.filter(s => s !== '新橋' && s !== 'タムラ' && s !== 'PCW').some(s => !carwashPrices[s]);
+    const hasUnset = CARWASH_SHOPS.filter(s => s !== '新橋' && s !== 'タムラ').some(s => !carwashPrices[s]);
     note.textContent = hasUnset ? '※ 未設定の洗車屋は設定タブから料金を登録してください' : '';
   }
 
@@ -2393,7 +2420,6 @@ canvas { max-width: 100%; }
     const isOpen = form.style.display !== 'none';
     form.style.display = isOpen ? 'none' : 'block';
     arrow.textContent = isOpen ? '▶' : '▼';
-    inputFormOpen = !isOpen;
     if (!isOpen) loadQuickInput();
   });
 
@@ -2480,6 +2506,7 @@ canvas { max-width: 100%; }
     // allDataの該当日に保存
     if (!allData[date]) allData[date] = { tab:0, jissya:0, jihara:0 };
     allData[date].uber = total;
+    allData[date]._ts = Date.now();
     allData[date].uberItems = [...uberModalItems];
     saveData();
     document.getElementById('uber-modal').style.display = 'none';
@@ -2536,7 +2563,7 @@ canvas { max-width: 100%; }
   function renderHighwayList(items, listId, totalId, hiddenId) {
     const list = document.getElementById(listId);
     list.innerHTML = items.map((amt, i) => `
-      <span class="hw-tag">
+      <span style="display:inline-flex;align-items:center;gap:4px;background:#2a2a2a;border:0.5px solid #3a3a3a;border-radius:6px;padding:3px 8px;font-size:12px;">
         ¥${amt.toLocaleString()}
         <button data-idx="${i}" style="background:transparent;border:none;color:#A32D2D;font-size:12px;padding:0;cursor:pointer;line-height:1;">×</button>
       </span>
@@ -2609,7 +2636,7 @@ canvas { max-width: 100%; }
     // 既に同じdayTypeで記録済みなら何もしない(2重デクリメント防止)
     const wasLeave = allData[date] && allData[date].dayType === 'leave';
     if (!confirm(`${date} を「${label}」として記録しますか?`)) return;
-    allData[date] = { dayType, tab: 0, jissya: 0, jihara: 0, startTime: '', endTime: '' };
+    allData[date] = { dayType, tab: 0, jissya: 0, jihara: 0, startTime: '', endTime: '', _ts: Date.now() };
     saveData();
     // 有給ボタン押下時のみ保有日数を-1
     if (dayType === 'leave' && !wasLeave && leaveDays !== null && leaveDays > 0) {
@@ -2624,7 +2651,6 @@ canvas { max-width: 100%; }
     // フォームを閉じる
     document.getElementById('input-form').style.display = 'none';
     document.getElementById('input-arrow').textContent = '▶';
-    inputFormOpen = false;
     showToast(`${label}として記録しました`);
     renderSummary();
   }
@@ -2643,11 +2669,15 @@ canvas { max-width: 100%; }
     const meterEnd = parseFloat(document.getElementById('quick-meter-end').value) || 0;
     const fuelDistance = parseFloat(document.getElementById('quick-fuel-distance').value) || 0;
     const fuelType = document.getElementById('quick-fuel-type').value || 'gasoline';
+    // 既存データのフォーム外フィールド(Uber等)を保持して上書き
+    const prev = allData[date] || {};
     const entry = { tab, jissya, jihara, jissyaItems: [...jissyaItems], jiharaItems: [...jiharaItems], startTime, endTime };
+    if (prev.uber > 0) { entry.uber = prev.uber; entry.uberItems = prev.uberItems ? [...prev.uberItems] : [prev.uber]; }
     if (meterStart > 0) entry.meterStart = meterStart;
     if (meterEnd > 0) entry.meterEnd = meterEnd;
     entry.fuelType = fuelType; // 車種は常に保存
     if (fuelDistance > 0) entry.fuelDistance = fuelDistance;
+    entry._ts = Date.now();
     allData[date] = entry;
     saveData();
 
@@ -2659,7 +2689,6 @@ canvas { max-width: 100%; }
     // 保存後はアコーディオンを閉じる
     document.getElementById('input-form').style.display = 'none';
     document.getElementById('input-arrow').textContent = '▶';
-    inputFormOpen = false;
     renderSummary();
   });
 
@@ -2756,8 +2785,8 @@ canvas { max-width: 100%; }
     let csv1 = '日付,売上,実車高速,空車高速(自腹),純売上,実質手取り,出勤時刻,退勤時刻,区分,走行距離,車種,開始メーター,終了メーター\n';
     sorted.forEach(([date, e]) => {
       const tab = e.tab||0, jissya = e.jissya||0, jihara = e.jihara||0;
-      const pure = Math.floor((tab - jissya - jihara) / 1.1);
-      csv1 += `${date},${tab},${jissya},${jihara},${pure},,${e.startTime||''},${e.endTime||''},${e.dayType||''},${e.fuelDistance||0},${e.fuelType||''},${e.meterStart||0},${e.meterEnd||0}\n`;
+      const pure = tab - jissya;
+      csv1 += `${date},${tab},${jissya},${jihara},${pure},${pure-jihara},${e.startTime||''},${e.endTime||''},${e.dayType||''},${e.fuelDistance||0},${e.fuelType||''},${e.meterStart||0},${e.meterEnd||0}\n`;
     });
     if (leaveDays !== null) csv1 += `#保有有給日数,${leaveDays}\n`;
     if (goal > 0) csv1 += `#月間目標,${goal}\n`;
@@ -2847,7 +2876,7 @@ canvas { max-width: 100%; }
             const ms = parseFloat(cols[11]); if (ms > 0) entry.meterStart = ms;
             const me = parseFloat(cols[12]); if (me > 0) entry.meterEnd = me;
           }
-          allData[date] = entry;
+          entry._ts = Date.now(); allData[date] = entry;
           count++;
         }
         saveData();
@@ -2969,7 +2998,7 @@ canvas { max-width: 100%; }
           const ms = parseFloat(cols[11]); if (ms > 0) entry.meterStart = ms;
           const me = parseFloat(cols[12]); if (me > 0) entry.meterEnd = me;
         }
-        allData[date] = entry; count++;
+        entry._ts = Date.now(); allData[date] = entry; count++;
       }
       saveData();
       if (goal > 0) document.getElementById('input-goal').value = goal;
@@ -3037,8 +3066,9 @@ canvas { max-width: 100%; }
     const cloudBtn = document.getElementById('cloud-login-btn');
     const logoutBtn = document.getElementById('logout-btn');
     if (loggedIn) {
-      const u = JSON.parse(localStorage.getItem('mk_fb_user'));
-      cloudBtn.textContent = `☁️ クラウド保存中(ID: ${u.userId})`;
+      let u = {};
+      try { u = JSON.parse(localStorage.getItem('mk_fb_user')) || {}; } catch(e) {}
+      cloudBtn.textContent = `☁️ クラウド保存中(ID: ${u.userId || '不明'})`;
       cloudBtn.style.color = '#3DBA86';
       logoutBtn.style.display = 'block';
     } else {
