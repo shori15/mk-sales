@@ -91,7 +91,7 @@ input, button {
   -webkit-appearance: none;
 }
 input[type="number"] { font-size: 16px; }
-input:focus, button:focus { outline: 2px solid #534AB7; outline-offset: -2px; }
+input:focus, button:focus { outline: 2px solid #C7A545; outline-offset: -2px; }
 
 /* チェックボックス・ラジオボタンのカスタムスタイル */
 input[type="checkbox"], input[type="radio"] {
@@ -279,24 +279,24 @@ canvas { max-width: 100%; }
           <label class="label">出勤時刻</label>
           <div style="display: flex; gap: 5px;">
             <input type="time" id="quick-start" style="flex: 1; min-width: 0;">
-            <button id="btn-start-now" style="padding: 0 8px; font-size: 11px; white-space: nowrap;">出勤</button>
+            <button id="btn-start-now" style="padding: 0 12px; font-size: 13px; white-space: nowrap; color: #C7A545; border-color: #4a4a4a;">出勤</button>
           </div>
         </div>
         <div>
           <label class="label">退勤時刻</label>
           <div style="display: flex; gap: 5px;">
             <input type="time" id="quick-end" style="flex: 1; min-width: 0;">
-            <button id="btn-end-now" style="padding: 0 8px; font-size: 11px; white-space: nowrap;">退勤</button>
+            <button id="btn-end-now" style="padding: 0 12px; font-size: 13px; white-space: nowrap; color: #C7A545; border-color: #4a4a4a;">退勤</button>
           </div>
         </div>
       </div>
       <p id="work-hours-preview" class="text-tertiary" style="margin-bottom: 8px; font-size: 11px; min-height: 14px;"></p>
       <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-        <button id="btn-leave" style="flex: 1; padding: 8px; font-size: 12px; background: #2a2a2a; border: 0.5px solid #3a3a3a; color: #C7A545; border-radius: 8px;">有給で記録</button>
-        <button id="btn-absence" style="flex: 1; padding: 8px; font-size: 12px; background: #2a2a2a; border: 0.5px solid #3a3a3a; color: #E05C5C; border-radius: 8px;">欠勤で記録</button>
+        <button id="btn-leave" style="flex: 1; padding: 11px; font-size: 13px; background: #2a2a2a; border: 0.5px solid #3a3a3a; color: #C7A545; border-radius: 8px;">有給で記録</button>
+        <button id="btn-absence" style="flex: 1; padding: 11px; font-size: 13px; background: #2a2a2a; border: 0.5px solid #3a3a3a; color: #E05C5C; border-radius: 8px;">欠勤で記録</button>
       </div>
       <div style="display: flex; align-items: center; gap: 8px;">
-        <button id="quick-save" class="btn-primary" style="flex: 1; padding: 12px;">保存</button>
+        <button id="quick-save" style="flex: 1; padding: 14px; background: #C7A545; color: #1a1a1a; border: none; border-radius: 10px; font-size: 15px; font-weight: 600;">保存</button>
         <span id="quick-msg" class="text-secondary" style="min-width: 70px;"></span>
       </div>
     </div>
@@ -1736,9 +1736,29 @@ canvas { max-width: 100%; }
           ${carwashAmt > 0 ? `<div style="color:#aaa;">洗車 -${fmtYen(carwashAmt)}</div>` : ''}
         </div>
         ${workLine ? `<div style="font-size: 11px; color: #777;">${workLine}${overtimeLine ? `　<span style="color:#C7A545;">${overtimeLine}</span>` : ''}</div>` : ''}
-        <button class="del-btn" data-date="${e.date}" style="margin-top: 8px;">削除</button>
+        <div style="display:flex; gap:8px; margin-top: 10px;">
+          <button class="edit-btn" data-date="${e.date}" style="flex:1; padding:10px; border-radius:8px; border:0.5px solid #3a3a3a; background:#2a2a2a; color:#e8e8e8; font-size:13px;">編集</button>
+          <button class="del-btn" data-date="${e.date}" style="flex:1; padding:10px; border-radius:8px; border:0.5px solid #3a3a3a; background:transparent; color:#A32D2D; font-size:13px;">削除</button>
+        </div>
       </div>`;
     }).join('');
+    // 編集ボタン: サマリーの入力フォームにその日を読み込む
+    container.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const date = btn.getAttribute('data-date');
+        document.getElementById('quick-date').value = date;
+        loadQuickInput();
+        switchTab('summary');
+        // 入力フォームを開く
+        const form = document.getElementById('input-form');
+        if (form && form.style.display === 'none') {
+          form.style.display = 'block';
+          document.getElementById('input-arrow').textContent = '▼';
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        showToast(`${date.slice(5)} を編集中`);
+      });
+    });
     container.querySelectorAll('.del-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const date = btn.getAttribute('data-date');
